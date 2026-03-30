@@ -10,6 +10,16 @@ Hierarchical agent frameworks fail 41–86.7% of the time, with coordination bre
 pip install broadside-ai
 ```
 
+**From source** (if you cloned the repo):
+
+```bash
+git clone https://github.com/HuginnIndustries/Broadside-AI.git
+cd Broadside-AI
+pip install -e .
+```
+
+The `-e` flag installs in editable mode — code changes take effect immediately without reinstalling.
+
 ## Quick Start
 
 Install [Ollama](https://ollama.ai), sign in for free cloud access, and run:
@@ -235,4 +245,4 @@ Real numbers, 3 agents, parallel vs sequential on the same tasks:
 
 Local inference on modest hardware still shows gains on longer tasks (1.40x summarization, 1.20x analytical). Short tasks lose to overhead. Better hardware = better parallelism — this is the floor, not the ceiling.
 
-In early testing, Anthropic showed the most consistent speedups — every task benefited from parallelism, with code review hitting 2.94x (near the 3.0x theoretical max). Ollama cloud results (free tier) were more variable — Nemotron showed strong gains on short tasks while DeepSeek was more mod
+In early testing, Anthropic showed the most consistent speedups — every task benefited from parallelism, with code review hitting 2.94x (near the 3.0x theoretical max). Ollama cloud results (free tier) were more variable — Nemotron showed strong gains on short tasks while DeepSeek was more moderate but consistent. Local inference on modest hardware (no discrete GPU) showed the smallest gains — parallelism helps most when the bottleneck is network latency, not local compute.
