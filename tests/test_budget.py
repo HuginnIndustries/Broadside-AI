@@ -1,7 +1,8 @@
 """Tests for budget circuit breaker."""
 
 import pytest
-from broadside.budget import BudgetExceeded, ScatterBudget
+
+from broadside.budget import BudgetExceededError, ScatterBudget
 
 
 def test_unbounded_budget():
@@ -24,7 +25,7 @@ def test_budget_within_limit():
 def test_budget_exceeded():
     b = ScatterBudget(max_tokens=5000)
     b.record(3000)
-    with pytest.raises(BudgetExceeded) as exc_info:
+    with pytest.raises(BudgetExceededError) as exc_info:
         b.record(3000)
     assert exc_info.value.limit == 5000
     assert exc_info.value.used == 6000

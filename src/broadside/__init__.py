@@ -1,10 +1,10 @@
 """Broadside: parallel LLM agent orchestration using scatter/gather."""
 
-from broadside.task import Task
-from broadside.scatter import scatter
 from broadside.gather import gather
-from broadside.synthesize import synthesize
 from broadside.run import run, run_sync
+from broadside.scatter import scatter
+from broadside.synthesize import synthesize
+from broadside.task import Task
 
 __version__ = "0.1.0"
 

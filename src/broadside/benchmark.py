@@ -11,7 +11,6 @@ strategies mature enough for a fair comparison.
 
 from __future__ import annotations
 
-import asyncio
 import json
 import time
 from dataclasses import dataclass, field
@@ -20,9 +19,7 @@ from typing import Any
 
 from broadside.backends import get_backend
 from broadside.backends.base import AgentResult
-from broadside.gather import gather
 from broadside.run import run
-from broadside.synthesize import Synthesis
 from broadside.task import Task
 
 

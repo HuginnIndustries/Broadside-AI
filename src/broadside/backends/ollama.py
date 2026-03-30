@@ -74,9 +74,7 @@ class OllamaBackend(Backend):
                         f"\n\nOr try the cloud version (no download, free tier):"
                         f"\n  ollama run {model_name.split(':')[0]}:cloud"
                     )
-                raise RuntimeError(
-                    f"Model '{model_name}' not found in Ollama.\n{hint}"
-                ) from None
+                raise RuntimeError(f"Model '{model_name}' not found in Ollama.\n{hint}") from None
             raise
 
         latency = (time.perf_counter() - t0) * 1000

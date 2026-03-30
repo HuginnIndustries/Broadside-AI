@@ -14,7 +14,6 @@ from dataclasses import dataclass
 from typing import Any
 
 from broadside.backends import get_backend
-from broadside.backends.base import AgentResult
 
 
 @dataclass
@@ -56,9 +55,7 @@ async def detect_conflicts(
         bk["model"] = model
     llm = get_backend(backend, **bk)
 
-    numbered = "\n\n".join(
-        f"--- Output {i + 1} ---\n{text}" for i, text in enumerate(texts)
-    )
+    numbered = "\n\n".join(f"--- Output {i + 1} ---\n{text}" for i, text in enumerate(texts))
 
     prompt = (
         "Compare these agent outputs and identify any CONTRADICTIONS — places "

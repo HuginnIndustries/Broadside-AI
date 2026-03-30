@@ -3,12 +3,11 @@
 from __future__ import annotations
 
 import asyncio
-import time
 from typing import Any
 
 from broadside.backends import get_backend
 from broadside.backends.base import AgentResult
-from broadside.budget import BudgetExceeded, ScatterBudget
+from broadside.budget import BudgetExceededError, ScatterBudget
 from broadside.task import Task
 
 # Backends where the server is likely local and can't handle concurrent load.
@@ -46,7 +45,7 @@ async def scatter(
         List of AgentResult from all completed branches.
 
     Raises:
-        BudgetExceeded: If budget is set and the scatter would exceed it.
+        BudgetExceededError: If budget is set and the scatter would exceed it.
     """
     if n < 1:
         raise ValueError(f"n must be >= 1, got {n}")
@@ -79,7 +78,7 @@ async def scatter(
             result = await llm.complete(prompt, **kwargs)
             budget_tracker.record(result.total_tokens)
             return result
-        except BudgetExceeded:
+        except BudgetExceededError:
             return None
         except Exception as exc:
             # Individual branch failures don't kill the scatter.

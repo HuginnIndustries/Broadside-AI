@@ -9,7 +9,7 @@ from __future__ import annotations
 import threading
 
 
-class BudgetExceeded(Exception):
+class BudgetExceededError(Exception):
     """Raised when a scatter exceeds its token budget."""
 
     def __init__(self, limit: int, used: int) -> None:
@@ -37,7 +37,7 @@ class ScatterBudget:
         with self._lock:
             self._used += tokens
             if self.max_tokens is not None and self._used > self.max_tokens:
-                raise BudgetExceeded(self.max_tokens, self._used)
+                raise BudgetExceededError(self.max_tokens, self._used)
 
     @property
     def used(self) -> int:

@@ -45,10 +45,11 @@ def main() -> None:
 @click.option(
     "--parallel/--sequential",
     default=None,
-    help="Force parallel or sequential execution. Default: sequential for local Ollama, parallel for cloud.",
+    help="Force parallel or sequential execution. Default: auto-detected by backend.",
 )
 @click.option(
-    "--output", "-o",
+    "--output",
+    "-o",
     type=click.Path(),
     default=None,
     help="Output directory. Default: broadside_output/",
@@ -93,8 +94,17 @@ def run(
     # Run the scatter/gather/synthesize pipeline
     asyncio.run(
         _run_pipeline(
-            task, n, backend, bk, synthesis, budget, parallel,
-            output_dir, save, raw, json_out,
+            task,
+            n,
+            backend,
+            bk,
+            synthesis,
+            budget,
+            parallel,
+            output_dir,
+            save,
+            raw,
+            json_out,
         )
     )
 
@@ -138,9 +148,7 @@ async def _run_pipeline(
         t0 = time.perf_counter()
         results = []
         for i in range(n):
-            with console.status(
-                f"[bold blue]Agent {i + 1}/{n}...[/bold blue]"
-            ):
+            with console.status(f"[bold blue]Agent {i + 1}/{n}...[/bold blue]"):
                 try:
                     from broadside.backends import get_backend
 
@@ -165,9 +173,7 @@ async def _run_pipeline(
             wall_ms = (time.perf_counter() - t0) * 1000
 
     if not results:
-        console.print(
-            f"[red]All {n} agents failed.[/red] Check that {backend} is running."
-        )
+        console.print(f"[red]All {n} agents failed.[/red] Check that {backend} is running.")
         sys.exit(1)
 
     # Gather
@@ -176,7 +182,8 @@ async def _run_pipeline(
     if raw:
         _show_raw(gathered.texts, json_out)
         if save:
-            _save_raw(gathered.texts, task, output_dir, model_hint=_model_dir_name(gathered.results))
+            hint = _model_dir_name(gathered.results)
+            _save_raw(gathered.texts, task, output_dir, model_hint=hint)
         return
 
     # Synthesize
@@ -224,8 +231,8 @@ def _slugify(text: str, max_len: int = 40) -> str:
     import re
 
     slug = text.lower().strip()
-    slug = re.sub(r"[^\w\s-]", "", slug)     # drop punctuation
-    slug = re.sub(r"[\s_]+", "-", slug)       # spaces/underscores → hyphens
+    slug = re.sub(r"[^\w\s-]", "", slug)  # drop punctuation
+    slug = re.sub(r"[\s_]+", "-", slug)  # spaces/underscores → hyphens
     slug = re.sub(r"-+", "-", slug).strip("-")  # collapse runs
     return slug[:max_len].rstrip("-")
 

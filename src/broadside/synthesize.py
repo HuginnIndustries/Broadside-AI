@@ -16,7 +16,6 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from broadside.backends import get_backend
-from broadside.backends.base import AgentResult
 from broadside.gather import GatherResult
 
 
@@ -68,8 +67,7 @@ async def synthesize(
         return await synthesize_voting(gathered, backend, backend_kwargs, model)
     else:
         raise ValueError(
-            f"Unknown synthesis strategy '{strategy}'. "
-            f"Available: 'llm', 'consensus', 'voting'."
+            f"Unknown synthesis strategy '{strategy}'. Available: 'llm', 'consensus', 'voting'."
         )
 
 
