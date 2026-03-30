@@ -13,8 +13,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from broadside.backends import get_backend
-from broadside.backends.base import AgentResult
+from broadside_ai.backends import get_backend
+from broadside_ai.backends.base import AgentResult
 
 
 @dataclass

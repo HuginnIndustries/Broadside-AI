@@ -28,7 +28,7 @@ meta:
 
 1. Copy `_template.yaml` to a new file
 2. Write a task that passes the "can you tell if it's done?" test
-3. Run `python -m broadside.task_validator tasks/your_task.yaml`
+3. Run `python -m broadside_ai.task_validator tasks/your_task.yaml`
 4. Open a PR — no issue required
 
 ## Good Tasks

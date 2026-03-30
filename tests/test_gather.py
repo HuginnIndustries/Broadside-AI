@@ -1,7 +1,7 @@
 """Tests for gather — result normalization."""
 
-from broadside.backends.base import AgentResult
-from broadside.gather import gather
+from broadside_ai.backends.base import AgentResult
+from broadside_ai.gather import gather
 
 
 def _make_result(text: str = "hello", tokens: int = 100) -> AgentResult:

@@ -1,6 +1,6 @@
 """Tests for task definition and prompt rendering."""
 
-from broadside.task import Task
+from broadside_ai.task import Task
 
 
 def test_basic_task():

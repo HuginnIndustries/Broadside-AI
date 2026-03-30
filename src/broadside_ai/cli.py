@@ -18,11 +18,11 @@ from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn, TimeEl
 from rich.table import Table
 from rich.text import Text
 
-from broadside.budget import ScatterBudget
-from broadside.gather import gather
-from broadside.scatter import scatter
-from broadside.synthesize import synthesize
-from broadside.task import Task
+from broadside_ai.budget import ScatterBudget
+from broadside_ai.gather import gather
+from broadside_ai.scatter import scatter
+from broadside_ai.synthesize import synthesize
+from broadside_ai.task import Task
 
 console = Console()
 
@@ -34,11 +34,11 @@ def _truncate_prompt(prompt: str, max_len: int = 60) -> str:
     return prompt[: max_len - 1].rstrip() + "\u2026"
 
 # Default output directory — created alongside the user's working directory
-_OUTPUT_DIR = Path("broadside_output")
+_OUTPUT_DIR = Path("broadside_ai_output")
 
 
 @click.group()
-@click.version_option(package_name="broadside")
+@click.version_option(package_name="broadside-ai")
 def main() -> None:
     """Broadside — parallel LLM agent orchestration using scatter/gather."""
     pass
@@ -61,7 +61,7 @@ def main() -> None:
     "--output", "-o",
     type=click.Path(),
     default=None,
-    help="Output directory. Default: broadside_output/",
+    help="Output directory. Default: broadside_ai_output/",
 )
 @click.option("--no-save", is_flag=True, help="Don't save results to files.")
 @click.option("--raw", is_flag=True, help="Show raw outputs instead of synthesis.")
@@ -136,7 +136,7 @@ async def _run_pipeline(
     model_display = backend_kwargs.get("model", "")
     if not model_display:
         if backend == "ollama":
-            from broadside.backends.ollama import _DEFAULT_MODEL
+            from broadside_ai.backends.ollama import _DEFAULT_MODEL
             model_display = f"{_DEFAULT_MODEL} (default)"
         elif backend == "anthropic":
             model_display = "claude-sonnet-4-20250514 (default)"
@@ -183,7 +183,7 @@ async def _run_pipeline(
         )
         with progress:
             ptask = progress.add_task("Scattering agents", total=n)
-            from broadside.backends import get_backend
+            from broadside_ai.backends import get_backend
             llm = get_backend(backend, **backend_kwargs)
             prompt = task.render_prompt()
             for i in range(n):
@@ -361,7 +361,7 @@ def _model_dir_name(results: list[Any]) -> str:
 def _build_run_dir(output_dir: Path, model_name: str, topic: str) -> Path:
     """Build the nested output path: output_dir / model / topic_timestamp.
 
-    Example: broadside_output/gemma3-1b/naval-ambush_20260329_143022/
+    Example: broadside_ai_output/gemma3-1b/naval-ambush_20260329_143022/
     """
     stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     run_name = f"{topic}_{stamp}" if topic else stamp
@@ -374,7 +374,7 @@ def _save_results(result: Any, task: Task, output_dir: Path) -> None:
     """Save synthesis + raw outputs to nested directories.
 
     Structure:
-        broadside_output/
+        broadside_ai_output/
             gemma3-1b/
                 naval-ambush_20260329_143022/
                     result.json
@@ -383,7 +383,7 @@ def _save_results(result: Any, task: Task, output_dir: Path) -> None:
                     agent_2.txt
                     agent_3.txt
     """
-    from broadside.synthesize import Synthesis
+    from broadside_ai.synthesize import Synthesis
 
     assert isinstance(result, Synthesis)
 
@@ -465,7 +465,7 @@ def _show_raw(texts: list[str], json_out: bool) -> None:
 
 
 def _show_json(result: Any) -> None:
-    from broadside.synthesize import Synthesis
+    from broadside_ai.synthesize import Synthesis
 
     assert isinstance(result, Synthesis)
     console.print_json(
@@ -482,7 +482,7 @@ def _show_json(result: Any) -> None:
 
 
 def _show_rich(result: Any, total_wall_ms: float | None = None) -> None:
-    from broadside.synthesize import Synthesis
+    from broadside_ai.synthesize import Synthesis
 
     assert isinstance(result, Synthesis)
 

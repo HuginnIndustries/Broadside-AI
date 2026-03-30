@@ -9,11 +9,11 @@ from __future__ import annotations
 import time
 from typing import Any
 
-from broadside.budget import ScatterBudget
-from broadside.gather import gather
-from broadside.scatter import scatter
-from broadside.synthesize import Synthesis, synthesize
-from broadside.task import Task
+from broadside_ai.budget import ScatterBudget
+from broadside_ai.gather import gather
+from broadside_ai.scatter import scatter
+from broadside_ai.synthesize import Synthesis, synthesize
+from broadside_ai.task import Task
 
 
 async def run(

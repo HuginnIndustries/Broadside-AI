@@ -21,7 +21,7 @@ python benchmarks/suite.py gemma3:1b
 ### Anthropic
 
 ```bash
-pip install broadside[anthropic]
+pip install broadside-ai[anthropic]
 set ANTHROPIC_API_KEY=your-key-here
 python benchmarks/suite.py --backend anthropic
 python benchmarks/suite.py --backend anthropic --model claude-sonnet-4-20250514
@@ -30,7 +30,7 @@ python benchmarks/suite.py --backend anthropic --model claude-sonnet-4-20250514
 ### OpenAI
 
 ```bash
-pip install broadside[openai]
+pip install broadside-ai[openai]
 set OPENAI_API_KEY=your-key-here
 python benchmarks/suite.py --backend openai
 python benchmarks/suite.py --backend openai --model gpt-4o

@@ -1,7 +1,7 @@
 """Broadside quick start — runs against Ollama, no API keys needed.
 
 Before running:
-    1. Install Broadside:  pip install broadside
+    1. Install Broadside:  pip install broadside-ai
     2. Install Ollama:     https://ollama.ai
     3. Sign in to the Ollama app (free cloud access)
 
@@ -13,7 +13,7 @@ Run with:
     python examples/quickstart.py
 """
 
-from broadside import Task, run_sync
+from broadside_ai import Task, run_sync
 
 # Define what you want — be specific about the output
 task = Task(

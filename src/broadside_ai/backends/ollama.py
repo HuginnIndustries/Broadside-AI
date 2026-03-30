@@ -1,7 +1,7 @@
 """Ollama backend — local-first, zero API keys.
 
 This is in the base install intentionally. Someone should be able to
-`pip install broadside` and run the quick start with just Ollama running.
+`pip install broadside-ai` and run the quick start with just Ollama running.
 """
 
 from __future__ import annotations
@@ -11,8 +11,8 @@ from typing import Any
 
 import httpx
 
-from broadside.backends import register
-from broadside.backends.base import AgentResult, Backend
+from broadside_ai.backends import register
+from broadside_ai.backends.base import AgentResult, Backend
 
 # Cloud by default — works without a GPU, free tier on Ollama.
 # Users with local hardware can override to a local model (e.g. gemma3:1b).

@@ -1,4 +1,4 @@
-"""Anthropic backend — requires `pip install broadside[anthropic]`."""
+"""Anthropic backend — requires `pip install broadside-ai[anthropic]`."""
 
 from __future__ import annotations
 
@@ -10,11 +10,11 @@ try:
 except ImportError as e:
     raise ImportError(
         "Anthropic backend requires the anthropic package. "
-        "Install it with: pip install broadside[anthropic]"
+        "Install it with: pip install broadside-ai[anthropic]"
     ) from e
 
-from broadside.backends import register
-from broadside.backends.base import AgentResult, Backend
+from broadside_ai.backends import register
+from broadside_ai.backends.base import AgentResult, Backend
 
 _DEFAULT_MODEL = "claude-sonnet-4-20250514"
 

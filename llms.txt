@@ -20,28 +20,28 @@ Broadside implements the scatter/gather pattern as its core organizing principle
 - Ollama (default, no API key needed, free cloud tier with sign-in)
   - Default model: nemotron-3-super:cloud (runs on Ollama's cloud)
   - All models run in parallel by default; use --sequential if hardware can't handle it
-- Anthropic (optional extra, `pip install broadside[anthropic]`)
-- OpenAI-compatible (optional extra, `pip install broadside[openai]`)
+- Anthropic (optional extra, `pip install broadside-ai[anthropic]`)
+- OpenAI-compatible (optional extra, `pip install broadside-ai[openai]`)
 
 ## Quick start
 
 ```bash
-pip install broadside
-python -m broadside run --prompt "Your task here" --n 3
+pip install broadside-ai
+python -m broadside_ai run --prompt "Your task here" --n 3
 ```
 
 ```python
-from broadside import Task, run_sync
+from broadside_ai import Task, run_sync
 
 task = Task(prompt="Your task here")
 result = run_sync(task, n=3, backend="ollama")
 print(result.result)
 ```
 
-Results are saved to `broadside_output/{model}/{topic}_{timestamp}/`.
+Results are saved to `broadside_ai_output/{model}/{topic}_{timestamp}/`.
 
 ## Links
 
 - Source: https://github.com/jsesler/broadside
 - Docs: https://jsesler.github.io/broadside
-- PyPI: https://pypi.org/project/broadside/
+- PyPI: https://pypi.org/project/broadside-ai/
