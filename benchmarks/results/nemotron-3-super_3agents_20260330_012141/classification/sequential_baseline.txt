@@ -1,0 +1,5 @@
+{
+  "label": "technical_support",
+  "confidence": 0.95,
+  "reasoning": "The user reports a persistent technical problem with data export functionality (CSV download hanging at 99%) that has lasted for three days and is time-sensitive due to an upcoming board meeting. This indicates a malfunction in the product's core feature, requiring troubleshooting or bug resolution—classic signs of a technical support issue. There is no mention of billing, feature suggestions, praise, or spam-like content. The urgency and specificity of the problem strongly align with technical support needs."
+}

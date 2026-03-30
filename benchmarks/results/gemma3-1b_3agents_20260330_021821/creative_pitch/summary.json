@@ -1,0 +1,16 @@
+{
+  "task": "creative_pitch",
+  "n_agents": 3,
+  "backend": "ollama",
+  "model": "gemma3:1b",
+  "parallel_wall_ms": 17307.7,
+  "sequential_wall_ms": 16103.1,
+  "speedup": 0.93,
+  "scatter_tokens": 509,
+  "synthesis_tokens": 1146,
+  "total_tokens": 1655,
+  "sequential_tokens": 542,
+  "token_multiplier": 9.2,
+  "scatter_only_multiplier": 2.8,
+  "diversity_score": 0.755
+}

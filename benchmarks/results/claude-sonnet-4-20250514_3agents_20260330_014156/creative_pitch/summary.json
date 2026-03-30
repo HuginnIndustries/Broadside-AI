@@ -1,0 +1,16 @@
+{
+  "task": "creative_pitch",
+  "n_agents": 3,
+  "backend": "anthropic",
+  "model": "claude-sonnet-4-20250514",
+  "parallel_wall_ms": 8370.5,
+  "sequential_wall_ms": 19753.2,
+  "speedup": 2.36,
+  "scatter_tokens": 644,
+  "synthesis_tokens": 1143,
+  "total_tokens": 1787,
+  "sequential_tokens": 625,
+  "token_multiplier": 8.6,
+  "scatter_only_multiplier": 3.1,
+  "diversity_score": 0.767
+}

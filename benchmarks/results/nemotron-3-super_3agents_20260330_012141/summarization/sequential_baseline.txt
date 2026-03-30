@@ -1,0 +1,12 @@
+For a startup with 5 engineers building a B2B SaaS product, **start with a monolith — not microservices.**
+
+**Why monolith wins:**  
+With only 5 engineers, you’re not scaling teams — you’re validating product-market fit. A monolith lets you ship faster: one codebase, one deploy, simple debugging, shared tooling, and minimal DevOps overhead. You avoid the distributed systems tax: network latency, eventual consistency, complex tracing, and ops burden. Early-stage SaaS thrives on velocity, not scalability theater. Your engineers can focus on features, not service mesh configuration or inter-service contracts.
+
+**Microservices trap:**  
+They promise independence and scalability — but at 5 engineers, you’ll spend 30–50% of your time on infra, not product. Premature decomposition leads to brittle interfaces, duplicated logic, and coordination hell. You’ll regret it when you realize your “microservice for user auth” is just a Flask app with 2 endpoints and 0 traffic.
+
+**When to split?**  
+Only when a single service becomes a bottleneck (e.g., payment processing at 10k RPM) or team size exceeds 8–10 engineers with clear domain boundaries. Until then, **monolith = speed = survival**.  
+*Ship the product. Optimize later.*  
+(198 words)

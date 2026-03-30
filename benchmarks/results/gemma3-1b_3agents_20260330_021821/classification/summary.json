@@ -1,0 +1,16 @@
+{
+  "task": "classification",
+  "n_agents": 3,
+  "backend": "ollama",
+  "model": "gemma3:1b",
+  "parallel_wall_ms": 12013.9,
+  "sequential_wall_ms": 10418.3,
+  "speedup": 0.87,
+  "scatter_tokens": 509,
+  "synthesis_tokens": 676,
+  "total_tokens": 1185,
+  "sequential_tokens": 502,
+  "token_multiplier": 7.1,
+  "scatter_only_multiplier": 3.0,
+  "diversity_score": 0.75
+}

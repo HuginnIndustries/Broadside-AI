@@ -44,8 +44,15 @@ Open an issue first to discuss the approach.
 
 ### 3. Benchmarks
 
-Run the benchmark suite against different tasks, models, or N values and
-contribute your results. See `benchmarks/README.md`.
+Run the benchmark suite against a different model and contribute your results:
+
+```bash
+python benchmarks/suite.py deepseek-v3.2:cloud
+```
+
+Results are saved to `benchmarks/results/` in a timestamped folder with full
+reproduction data. See `benchmarks/README.md` for details on metrics and output
+structure.
 
 ### 4. Backend Integrations
 

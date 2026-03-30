@@ -1,0 +1,5 @@
+{
+  "label": "technical_support",
+  "confidence": 0.92,
+  "reasoning": "The user is experiencing a persistent technical problem — the CSV export hangs at 99% after multiple attempts over three days — which is preventing them from completing a time-sensitive task (board meeting preparation). This is a clear indication of a system or software malfunction requiring troubleshooting, not a billing concern, feature suggestion, compliment, or irrelevant content. The urgency and specificity of the failure point strongly to technical support."
+}

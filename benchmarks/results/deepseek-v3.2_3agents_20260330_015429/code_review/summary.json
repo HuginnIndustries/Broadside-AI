@@ -1,0 +1,16 @@
+{
+  "task": "code_review",
+  "n_agents": 3,
+  "backend": "ollama",
+  "model": "deepseek-v3.2",
+  "parallel_wall_ms": 114950.4,
+  "sequential_wall_ms": 175269.7,
+  "speedup": 1.52,
+  "scatter_tokens": 8258,
+  "synthesis_tokens": 5345,
+  "total_tokens": 13603,
+  "sequential_tokens": 7837,
+  "token_multiplier": 5.2,
+  "scatter_only_multiplier": 3.2,
+  "diversity_score": 0.674
+}

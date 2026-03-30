@@ -31,9 +31,9 @@ Goal: real numbers that back up the README's claims.
 
 - [x] Benchmark harness (latency, token cost, output diversity)
 - [x] Benchmark suite: 3–5 task types (creative, analytical, classification, summarization, code review)
-- [ ] Broadside vs. sequential baseline on same tasks
+- [x] Broadside vs. sequential baseline on same tasks (1.75x avg speedup, 2.88x peak)
 - [ ] Broadside vs. LangGraph fan-out on same tasks (if feasible without misrepresenting)
-- [ ] Published benchmark results in `benchmarks/` with reproduction instructions
+- [x] Published benchmark results in `benchmarks/results/` with reproduction instructions
 - [x] Synthesis strategies beyond basic LLM aggregation:
   - [x] Consensus (best for knowledge tasks — ACL 2025 Kaesberg et al.)
   - [x] Voting (best for reasoning tasks)

@@ -1,0 +1,16 @@
+{
+  "task": "summarization",
+  "n_agents": 3,
+  "backend": "ollama",
+  "model": "gemma3:1b",
+  "parallel_wall_ms": 30589.3,
+  "sequential_wall_ms": 42915.5,
+  "speedup": 1.4,
+  "scatter_tokens": 841,
+  "synthesis_tokens": 1246,
+  "total_tokens": 2087,
+  "sequential_tokens": 921,
+  "token_multiplier": 6.8,
+  "scatter_only_multiplier": 2.7,
+  "diversity_score": 0.803
+}

@@ -1,0 +1,5 @@
+{
+    'label': 'technical_support',
+    'confidence': 0.95,
+    'reasoning': 'The message reports a specific technical problem (CSV download hanging at 99%) and requests urgent assistance to resolve it, which aligns with technical support rather than billing, feature requests, praise, or spam.'
+}

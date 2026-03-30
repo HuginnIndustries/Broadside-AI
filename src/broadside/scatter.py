@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import time
 from typing import Any
 
@@ -11,10 +12,7 @@ from broadside.backends.base import AgentResult
 from broadside.budget import BudgetExceeded, ScatterBudget
 from broadside.task import Task
 
-# Backends where the server is likely local and can't handle concurrent load.
-# For these, we run branches sequentially by default to avoid choking the machine.
-# Exception: :cloud models route to Ollama's cloud, so they can run in parallel.
-_LOCAL_BACKENDS = {"ollama"}
+logger = logging.getLogger(__name__)
 
 
 async def scatter(
@@ -59,20 +57,20 @@ async def scatter(
             stacklevel=2,
         )
 
-    # Auto-detect concurrency mode based on backend and model
+    # Default to parallel — let hardware limits surface naturally
     if parallel is None:
-        model = (backend_kwargs or {}).get("model", "")
-        model_str = str(model).lower()
-        is_cloud_model = model_str.endswith("-cloud") or ":cloud" in model_str
-        parallel = (backend not in _LOCAL_BACKENDS) or is_cloud_model
+        parallel = True
 
     llm = get_backend(backend, **(backend_kwargs or {}))
     prompt = task.render_prompt()
     kwargs = agent_kwargs or {}
     budget_tracker = budget or ScatterBudget()  # unbounded by default
 
+    last_error: Exception | None = None
+
     async def _run_one(index: int) -> AgentResult | None:
         """Run a single scatter branch, respecting budget."""
+        nonlocal last_error
         if budget_tracker.exhausted:
             return None
         try:
@@ -84,12 +82,8 @@ async def scatter(
         except Exception as exc:
             # Individual branch failures don't kill the scatter.
             # Log and continue — partial results are still useful.
-            import warnings
-
-            warnings.warn(
-                f"Scatter branch {index} failed: {exc}",
-                stacklevel=2,
-            )
+            logger.debug("Scatter branch %d failed: %s", index, exc)
+            last_error = exc
             return None
 
     if parallel:
@@ -105,9 +99,10 @@ async def scatter(
     completed = [r for r in results if r is not None]
 
     if not completed:
+        hint = f"\n  Last error: {last_error}" if last_error else ""
         raise RuntimeError(
-            f"All {n} scatter branches failed. Check backend configuration "
-            f"and that '{backend}' is running."
+            f"All {n} agents failed. Check that '{backend}' is running "
+            f"and the model is available.{hint}"
         )
 
     return completed

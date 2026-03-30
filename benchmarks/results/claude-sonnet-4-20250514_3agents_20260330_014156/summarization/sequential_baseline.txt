@@ -1,0 +1,25 @@
+**Go monolith first.**
+
+With 5 engineers building B2B SaaS, microservices will slow you down and burn cash. Here's why:
+
+**Monolith advantages:**
+- **Faster development** - Single codebase, shared libraries, easier debugging
+- **Lower operational overhead** - One deployment, simpler monitoring, fewer moving parts
+- **Better resource efficiency** - No network overhead between services
+- **Easier refactoring** - Change data models and APIs without coordinating across teams
+
+**Microservices drawbacks for your stage:**
+- **Premature complexity** - Distributed systems problems before you need the benefits
+- **Higher infrastructure costs** - Multiple databases, load balancers, monitoring tools
+- **Slower feature delivery** - Cross-service changes require more coordination
+- **Team overhead** - 5 engineers can't effectively own multiple services
+
+**When to consider microservices:**
+- You have 20+ engineers
+- Clear service boundaries emerge naturally
+- Independent scaling needs are proven
+- You have dedicated DevOps resources
+
+**Bottom line:** Microservices solve organizational problems (team autonomy, independent deployment) that you don't have yet. Build a well-structured monolith with clear module boundaries. You can extract services later when complexity and team size justify the overhead.
+
+Focus on shipping fast, not architectural purity.

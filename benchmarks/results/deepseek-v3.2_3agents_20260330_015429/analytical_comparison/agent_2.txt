@@ -1,0 +1,16 @@
+Here's a structured comparison of SQLite, PostgreSQL, and DuckDB for a read-heavy analytics workload on 10 million rows:
+
+| Aspect | SQLite | PostgreSQL | DuckDB |
+|--------|--------|------------|--------|
+| **Query Speed** | Slow for complex analytics on 10M rows. Row-based storage, limited parallelism, and no advanced query optimization for analytics. | Good for moderate analytics. Row-based but supports parallelism (if configured), indexes, and mature optimizer. Can struggle with very large analytical scans. | Excellent for analytics on this scale. Columnar storage, vectorized execution, and automatic parallelism. Optimized for OLAP workloads. |
+| **Memory Usage** | Low memory footprint by default, but can be tuned. May spill to disk for large operations. | Higher memory usage, especially with large shared_buffers and work_mem settings. Can be tuned for read-heavy workloads. | Moderate to high memory usage for processing, but efficient columnar compression reduces footprint. Can spill to disk if needed. |
+| **Operational Complexity** | Minimal: single file, zero configuration, no server management. Embeddable in applications. | High: requires server setup, configuration, tuning, backups, and maintenance. Needs DBA expertise for performance. | Very low: embedded library (like SQLite), no server management. Simple file-based or in-memory operation. |
+| **Ecosystem Maturity** | Very mature, with widespread tooling support. Limited for analytics (e.g., no native partitioning). | Extremely mature: robust drivers, ORMs, monitoring tools, and cloud managed services. Rich extensions (e.g., TimescaleDB, Citus). | Growing rapidly but less mature. Good Python/R integration and Parquet/CSV support. Fewer admin tools and fewer production references. |
+| **Best For This Workload?** | Not recommended unless data is heavily indexed or queries are simple. Lacks analytical optimizations. | Suitable if you need concurrent access, ACID guarantees, and have existing infrastructure. Tune with indexes/materialized views. | **Optimal choice** for embedded analytics on 10M rows. Fast columnar scans, modern execution engine, and minimal ops. |
+
+### Summary Recommendations:
+- **Choose DuckDB** for fast, self-contained analytical queries with minimal operational overhead.
+- **Choose PostgreSQL** if you need concurrent writes, robust security, or integration with existing relational ecosystems.
+- **Choose SQLite** only if the workload is trivial (e.g., filtered lookups with indexes) and simplicity is the top priority.
+
+All three can handle 10M rows, but DuckDB is specifically designed for this type of analytical workload.

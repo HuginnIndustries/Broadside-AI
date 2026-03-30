@@ -1,30 +1,40 @@
 """Standard benchmark suite — run with `python benchmarks/suite.py`.
 
-Requires Ollama signed in for cloud access (default: nemotron-3-super:cloud), or a local model pulled.
 Results are written to benchmarks/results/.
 
-Task types chosen to cover the scatter/gather sweet spot:
-1. Creative: multiple valid outputs, diversity is the point
-2. Analytical: structured comparison, consensus matters
-3. Classification: right/wrong answer, voting should help
-4. Summarization: information compression, synthesis adds value
-5. Code review: finding issues in parallel, gather catches more
+Usage:
+    python benchmarks/suite.py                                          # Ollama cloud (default)
+    python benchmarks/suite.py deepseek-v3.2:cloud                      # different Ollama cloud model
+    python benchmarks/suite.py gemma3:1b                                # local Ollama model
+    python benchmarks/suite.py --backend anthropic                      # Anthropic (Claude)
+    python benchmarks/suite.py --backend anthropic --model claude-sonnet-4-20250514
+    python benchmarks/suite.py --backend openai                         # OpenAI
+    python benchmarks/suite.py --backend openai --model gpt-4o          # specific OpenAI model
 """
 
 import asyncio
-import json
-from pathlib import Path
+import sys
+import time
+
+from rich.console import Console
+from rich.live import Live
+from rich.panel import Panel
+from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
+from rich.table import Table
+from rich.text import Text
 
 from broadside.benchmark import run_benchmark_suite
 from broadside.task import Task
+
+console = Console()
 
 TASKS = [
     (
         "creative_pitch",
         Task(
             prompt=(
-                "Write a one-paragraph pitch for a developer tool that "
-                "automatically generates changelog entries from git commits. "
+                "Write a one-paragraph pitch for a naval strategy game where "
+                "players command age-of-sail warships in real-time fleet battles. "
                 "Make it compelling and specific."
             ),
         ),
@@ -89,32 +99,225 @@ TASKS = [
 ]
 
 
-async def main() -> None:
-    print("Running Broadside benchmark suite...")
-    print(f"Tasks: {len(TASKS)}")
-    print(f"Backend: ollama (nemotron-3-super:cloud)")
-    print(f"Agents per scatter: 3")
-    print()
-
-    results = await run_benchmark_suite(
-        tasks=TASKS,
-        n=3,
-        backend="ollama",
-        output_dir="benchmarks/results",
+def _build_results_table(completed: list, task_names: list[str], current_idx: int) -> Table:
+    """Build a rich table showing benchmark progress."""
+    table = Table(
+        title="Benchmark Results",
+        show_lines=True,
+        title_style="bold cyan",
+        border_style="blue",
     )
+    table.add_column("Task", style="bold", min_width=22)
+    table.add_column("Scatter", justify="right", min_width=9)
+    table.add_column("Sequential", justify="right", min_width=11)
+    table.add_column("Speedup", justify="right", min_width=8)
+    table.add_column("Cost", justify="right", min_width=7)
+    table.add_column("Diversity", justify="right", min_width=9)
+    table.add_column("Status", justify="center", min_width=10)
 
-    # Print summary table
-    print(f"{'Task':<25} {'Speedup':>8} {'Tokens':>8} {'Diversity':>10}")
-    print("-" * 55)
-    for r in results:
-        print(
-            f"{r.task_name:<25} "
-            f"{r.speedup:>7.2f}x "
-            f"{r.token_multiplier:>7.1f}x "
-            f"{r.diversity_score:>9.3f}"
+    for i, name in enumerate(task_names):
+        if i < len(completed):
+            r = completed[i]
+            # Color speedup based on value
+            spd = r.speedup
+            if spd >= 2.5:
+                spd_style = "bold green"
+            elif spd >= 1.5:
+                spd_style = "green"
+            else:
+                spd_style = "yellow"
+
+            table.add_row(
+                name,
+                f"{r.scatter_wall_ms/1000:.1f}s",
+                f"{r.sequential_wall_ms/1000:.1f}s",
+                Text(f"{spd:.2f}x", style=spd_style),
+                f"{r.token_multiplier:.1f}x",
+                f"{r.diversity_score:.3f}",
+                Text("Done", style="bold green"),
+            )
+        elif i == current_idx:
+            table.add_row(
+                name, "", "", "", "", "",
+                Text("Running...", style="bold yellow"),
+            )
+        else:
+            table.add_row(
+                name,
+                Text("-", style="dim"),
+                Text("-", style="dim"),
+                Text("-", style="dim"),
+                Text("-", style="dim"),
+                Text("-", style="dim"),
+                Text("Pending", style="dim"),
+            )
+
+    # Averages row (only if we have results)
+    if completed:
+        avg_spd = sum(r.speedup for r in completed) / len(completed)
+        avg_cost = sum(r.token_multiplier for r in completed) / len(completed)
+        avg_div = sum(r.diversity_score for r in completed) / len(completed)
+        table.add_row(
+            Text("Average", style="bold"),
+            "", "",
+            Text(f"{avg_spd:.2f}x", style="bold"),
+            Text(f"{avg_cost:.1f}x", style="bold"),
+            Text(f"{avg_div:.3f}", style="bold"),
+            f"{len(completed)}/{len(task_names)}",
+            style="on grey15",
         )
-    print()
-    print(f"Results saved to benchmarks/results/results.json")
+
+    return table
+
+
+def _parse_args() -> tuple[str, dict]:
+    """Parse CLI args: positional model, --backend, --model flags."""
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="Run the Broadside benchmark suite.",
+        epilog=(
+            "examples:\n"
+            "  python benchmarks/suite.py                              # Ollama cloud (default)\n"
+            "  python benchmarks/suite.py deepseek-v3.2:cloud          # Ollama cloud model\n"
+            "  python benchmarks/suite.py --backend anthropic          # Anthropic (Claude)\n"
+            "  python benchmarks/suite.py --backend openai --model gpt-4o\n"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument("model", nargs="?", default=None, help="Model name (shortcut for --model)")
+    parser.add_argument("--backend", "-b", default="ollama", help="LLM backend (default: ollama)")
+    parser.add_argument("--model", "-m", dest="model_flag", default=None, help="Model name")
+
+    args = parser.parse_args()
+
+    # --model flag takes precedence over positional arg
+    model = args.model_flag or args.model
+    backend = args.backend
+    bk = {"model": model} if model else {}
+
+    return backend, bk
+
+
+async def main() -> None:
+    backend, bk = _parse_args()
+    n = 3
+
+    # Figure out display name
+    model_name = bk.get("model", "")
+    if not model_name:
+        if backend == "ollama":
+            model_display = "nemotron-3-super:cloud (default)"
+        elif backend == "anthropic":
+            model_display = "claude-sonnet-4-20250514 (default)"
+        elif backend == "openai":
+            model_display = "gpt-4o-mini (default)"
+        else:
+            model_display = "(backend default)"
+    else:
+        model_display = model_name
+
+    mode = "parallel"
+
+    # Header
+    console.print()
+    console.print(Panel(
+        f"[bold]Model:[/bold]   {model_display}\n"
+        f"[bold]Backend:[/bold] {backend}\n"
+        f"[bold]Agents:[/bold]  {n}\n"
+        f"[bold]Tasks:[/bold]   {len(TASKS)}\n"
+        f"[bold]Mode:[/bold]    {mode}",
+        title="[bold cyan]Broadside Benchmark Suite[/bold cyan]",
+        border_style="cyan",
+        padding=(1, 2),
+    ))
+    console.print()
+
+    task_names = [name for name, _ in TASKS]
+    completed = []
+    current_idx = 0
+    suite_start = time.perf_counter()
+
+    # Progress bar for overall suite
+    progress = Progress(
+        SpinnerColumn(),
+        TextColumn("[bold blue]{task.description}"),
+        BarColumn(bar_width=30),
+        TextColumn("{task.completed}/{task.total} tasks"),
+        TimeElapsedColumn(),
+        console=console,
+    )
+    overall_task = progress.add_task("Benchmarking", total=len(TASKS))
+
+    def on_task_start(name, idx, total):
+        nonlocal current_idx
+        current_idx = idx
+
+    def on_task_done(result, idx, total):
+        completed.append(result)
+        progress.update(overall_task, advance=1)
+
+    # Run with live display
+    with Live(
+        _build_results_table(completed, task_names, current_idx),
+        console=console,
+        refresh_per_second=4,
+    ) as live:
+        # Wrap to update both table and progress
+        async def run_with_live():
+            results = []
+            total = len(TASKS)
+            for i, (name, task) in enumerate(TASKS):
+                on_task_start(name, i, total)
+                live.update(_build_results_table(completed, task_names, current_idx))
+
+                from broadside.benchmark import benchmark_task
+                r = await benchmark_task(
+                    task=task,
+                    task_name=name,
+                    n=n,
+                    backend=backend,
+                    backend_kwargs=bk,
+                )
+                on_task_done(r, i, total)
+                live.update(_build_results_table(completed, task_names, current_idx))
+                results.append(r)
+            return results
+
+        results = await run_with_live()
+
+    suite_elapsed = time.perf_counter() - suite_start
+
+    # Save results
+    from broadside.benchmark import _build_run_dir, _save_benchmark_results
+    run_dir = _build_run_dir("benchmarks/results", results, backend, bk)
+    _save_benchmark_results(results, run_dir, n, backend, bk)
+
+    # Final summary
+    console.print()
+    avg_spd = sum(r.speedup for r in results) / len(results)
+    avg_cost = sum(r.token_multiplier for r in results) / len(results)
+    avg_div = sum(r.diversity_score for r in results) / len(results)
+    best = max(results, key=lambda r: r.speedup)
+
+    console.print(Panel(
+        f"[bold green]Suite completed in {suite_elapsed:.1f}s[/bold green]\n\n"
+        f"  Average speedup:    [bold]{avg_spd:.2f}x[/bold] (parallel vs sequential)\n"
+        f"  Average cost:       [bold]{avg_cost:.1f}x[/bold] (vs single call)\n"
+        f"  Average diversity:  [bold]{avg_div:.3f}[/bold]\n"
+        f"  Best speedup:       [bold green]{best.speedup:.2f}x[/bold green] ({best.task_name})\n\n"
+        f"  Saved to: [blue]{run_dir}[/blue]",
+        title="[bold cyan]Summary[/bold cyan]",
+        border_style="green",
+        padding=(1, 2),
+    ))
+
+    console.print()
+    console.print("[dim]Run with a different backend or model:[/dim]")
+    console.print("[dim]  python benchmarks/suite.py deepseek-v3.2:cloud[/dim]")
+    console.print("[dim]  python benchmarks/suite.py --backend anthropic[/dim]")
+    console.print("[dim]  python benchmarks/suite.py --backend openai --model gpt-4o[/dim]")
+    console.print()
 
 
 if __name__ == "__main__":

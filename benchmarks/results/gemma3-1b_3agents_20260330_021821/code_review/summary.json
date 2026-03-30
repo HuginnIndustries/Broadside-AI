@@ -1,0 +1,16 @@
+{
+  "task": "code_review",
+  "n_agents": 3,
+  "backend": "ollama",
+  "model": "gemma3:1b",
+  "parallel_wall_ms": 187930.1,
+  "sequential_wall_ms": 182648.4,
+  "speedup": 0.97,
+  "scatter_tokens": 4208,
+  "synthesis_tokens": 5230,
+  "total_tokens": 9438,
+  "sequential_tokens": 4310,
+  "token_multiplier": 6.6,
+  "scatter_only_multiplier": 2.9,
+  "diversity_score": 0.735
+}

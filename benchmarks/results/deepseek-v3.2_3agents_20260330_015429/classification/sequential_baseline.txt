@@ -1,0 +1,1 @@
+{'label': 'technical_support', 'confidence': 0.99, 'reasoning': 'The message describes a specific technical issue with data export functionality (CSV download hanging) and urgently requests assistance, which directly aligns with a technical support request.'}

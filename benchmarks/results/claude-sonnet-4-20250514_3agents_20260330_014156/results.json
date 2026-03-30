@@ -1,0 +1,93 @@
+{
+  "metadata": {
+    "timestamp": "2026-03-30 05:41 UTC",
+    "backend": "anthropic",
+    "model": "claude-sonnet-4-20250514",
+    "n_agents": 3,
+    "backend_kwargs": {
+      "model": "claude-sonnet-4-20250514"
+    }
+  },
+  "results": [
+    {
+      "task": "creative_pitch",
+      "n_agents": 3,
+      "backend": "anthropic",
+      "model": "claude-sonnet-4-20250514",
+      "parallel_wall_ms": 8370.5,
+      "sequential_wall_ms": 19753.2,
+      "speedup": 2.36,
+      "scatter_tokens": 644,
+      "synthesis_tokens": 1143,
+      "total_tokens": 1787,
+      "sequential_tokens": 625,
+      "token_multiplier": 8.6,
+      "scatter_only_multiplier": 3.1,
+      "diversity_score": 0.767
+    },
+    {
+      "task": "analytical_comparison",
+      "n_agents": 3,
+      "backend": "anthropic",
+      "model": "claude-sonnet-4-20250514",
+      "parallel_wall_ms": 35275.1,
+      "sequential_wall_ms": 78768.6,
+      "speedup": 2.23,
+      "scatter_tokens": 4819,
+      "synthesis_tokens": 5653,
+      "total_tokens": 10472,
+      "sequential_tokens": 4612,
+      "token_multiplier": 6.8,
+      "scatter_only_multiplier": 3.1,
+      "diversity_score": 0.734
+    },
+    {
+      "task": "classification",
+      "n_agents": 3,
+      "backend": "anthropic",
+      "model": "claude-sonnet-4-20250514",
+      "parallel_wall_ms": 4583.3,
+      "sequential_wall_ms": 11377.7,
+      "speedup": 2.48,
+      "scatter_tokens": 602,
+      "synthesis_tokens": 705,
+      "total_tokens": 1307,
+      "sequential_tokens": 606,
+      "token_multiplier": 6.5,
+      "scatter_only_multiplier": 3.0,
+      "diversity_score": 0.64
+    },
+    {
+      "task": "summarization",
+      "n_agents": 3,
+      "backend": "anthropic",
+      "model": "claude-sonnet-4-20250514",
+      "parallel_wall_ms": 10734.2,
+      "sequential_wall_ms": 27852.4,
+      "speedup": 2.59,
+      "scatter_tokens": 1072,
+      "synthesis_tokens": 1504,
+      "total_tokens": 2576,
+      "sequential_tokens": 1066,
+      "token_multiplier": 7.2,
+      "scatter_only_multiplier": 3.0,
+      "diversity_score": 0.735
+    },
+    {
+      "task": "code_review",
+      "n_agents": 3,
+      "backend": "anthropic",
+      "model": "claude-sonnet-4-20250514",
+      "parallel_wall_ms": 17289.0,
+      "sequential_wall_ms": 50802.0,
+      "speedup": 2.94,
+      "scatter_tokens": 2967,
+      "synthesis_tokens": 3440,
+      "total_tokens": 6407,
+      "sequential_tokens": 3529,
+      "token_multiplier": 5.4,
+      "scatter_only_multiplier": 2.5,
+      "diversity_score": 0.651
+    }
+  ]
+}

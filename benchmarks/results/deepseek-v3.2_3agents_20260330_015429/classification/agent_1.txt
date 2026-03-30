@@ -1,0 +1,1 @@
+{'label': 'technical_support', 'confidence': 0.95, 'reasoning': 'The user describes a specific technical problem with data export functionality (CSV download hanging at 99%) and requests urgent help, which aligns with a technical support request rather than other categories like billing, feature requests, praise, or spam.'}

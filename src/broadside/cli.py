@@ -12,8 +12,11 @@ from typing import Any
 import click
 import yaml
 from rich.console import Console
+from rich.live import Live
 from rich.panel import Panel
+from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
 from rich.table import Table
+from rich.text import Text
 
 from broadside.budget import ScatterBudget
 from broadside.gather import gather
@@ -22,6 +25,13 @@ from broadside.synthesize import synthesize
 from broadside.task import Task
 
 console = Console()
+
+
+def _truncate_prompt(prompt: str, max_len: int = 60) -> str:
+    """Shorten a prompt for display, preserving the start."""
+    if len(prompt) <= max_len:
+        return prompt
+    return prompt[: max_len - 1].rstrip() + "\u2026"
 
 # Default output directory — created alongside the user's working directory
 _OUTPUT_DIR = Path("broadside_output")
@@ -45,7 +55,7 @@ def main() -> None:
 @click.option(
     "--parallel/--sequential",
     default=None,
-    help="Force parallel or sequential execution. Default: sequential for local Ollama, parallel for cloud.",
+    help="Force parallel or sequential execution. Default: parallel.",
 )
 @click.option(
     "--output", "-o",
@@ -91,12 +101,16 @@ def run(
     save = not no_save
 
     # Run the scatter/gather/synthesize pipeline
-    asyncio.run(
-        _run_pipeline(
-            task, n, backend, bk, synthesis, budget, parallel,
-            output_dir, save, raw, json_out,
+    try:
+        asyncio.run(
+            _run_pipeline(
+                task, n, backend, bk, synthesis, budget, parallel,
+                output_dir, save, raw, json_out,
+            )
         )
-    )
+    except RuntimeError as exc:
+        console.print(f"\n[bold red]Error:[/bold red] {exc}")
+        sys.exit(1)
 
 
 async def _run_pipeline(
@@ -115,86 +129,187 @@ async def _run_pipeline(
     """Execute the full pipeline with rich output."""
     import time
 
-    from broadside.scatter import _LOCAL_BACKENDS
+    run_parallel = parallel if parallel is not None else True
+    mode = "parallel" if run_parallel else "sequential"
 
-    # Determine execution mode for display
-    is_local = backend in _LOCAL_BACKENDS
-    model_name = backend_kwargs.get("model", "")
-    model_lower = str(model_name).lower()
-    is_cloud_model = model_lower.endswith("-cloud") or ":cloud" in model_lower
-    if parallel is None:
-        run_parallel = (not is_local) or is_cloud_model
-    else:
-        run_parallel = parallel
+    # Resolve model display name
+    model_display = backend_kwargs.get("model", "")
+    if not model_display:
+        if backend == "ollama":
+            from broadside.backends.ollama import _DEFAULT_MODEL
+            model_display = f"{_DEFAULT_MODEL} (default)"
+        elif backend == "anthropic":
+            model_display = "claude-sonnet-4-20250514 (default)"
+        elif backend == "openai":
+            model_display = "gpt-4o-mini (default)"
+        else:
+            model_display = "(backend default)"
 
-    if run_parallel:
-        mode_label = f"Scattering to {n} agents in parallel"
-    else:
-        mode_label = f"Running {n} agents sequentially"
+    # JSON mode skips all the rich display
+    if json_out:
+        return await _run_pipeline_quiet(
+            task, n, backend, backend_kwargs, strategy, budget,
+            run_parallel, output_dir, save, raw,
+        )
 
-    # Scatter
-    if not run_parallel and not json_out:
-        # Sequential mode: show per-agent progress
-        t0 = time.perf_counter()
+    # --- Header panel ---
+    console.print()
+    console.print(Panel(
+        f"[bold]Prompt:[/bold]  {_truncate_prompt(task.prompt)}\n"
+        f"[bold]Model:[/bold]   {model_display}\n"
+        f"[bold]Backend:[/bold] {backend}\n"
+        f"[bold]Agents:[/bold]  {n}\n"
+        f"[bold]Mode:[/bold]    {mode}\n"
+        f"[bold]Synth:[/bold]   {strategy}",
+        title="[bold cyan]Broadside[/bold cyan]",
+        border_style="cyan",
+        padding=(1, 2),
+    ))
+    console.print()
+
+    # --- Scatter phase with live progress ---
+    scatter_start = time.perf_counter()
+
+    if not run_parallel:
+        # Sequential: show per-agent progress bar
         results = []
-        for i in range(n):
-            with console.status(
-                f"[bold blue]Agent {i + 1}/{n}...[/bold blue]"
-            ):
+        progress = Progress(
+            SpinnerColumn(),
+            TextColumn("[bold blue]{task.description}"),
+            BarColumn(bar_width=30),
+            TextColumn("{task.completed}/{task.total}"),
+            TimeElapsedColumn(),
+            console=console,
+        )
+        with progress:
+            ptask = progress.add_task("Scattering agents", total=n)
+            from broadside.backends import get_backend
+            llm = get_backend(backend, **backend_kwargs)
+            prompt = task.render_prompt()
+            for i in range(n):
+                progress.update(ptask, description=f"Agent {i + 1}/{n} thinking")
                 try:
-                    from broadside.backends import get_backend
-
-                    llm = get_backend(backend, **backend_kwargs)
-                    prompt = task.render_prompt()
                     result = await llm.complete(prompt)
                     results.append(result)
                 except Exception as exc:
                     console.print(f"  [yellow]Agent {i + 1} failed: {exc}[/yellow]")
-        wall_ms = (time.perf_counter() - t0) * 1000
+                progress.update(ptask, advance=1)
     else:
-        with console.status(f"[bold blue]{mode_label}...[/bold blue]"):
-            t0 = time.perf_counter()
+        # Parallel: spinner with elapsed time
+        progress = Progress(
+            SpinnerColumn(),
+            TextColumn(f"[bold blue]Scattering to {n} agents in parallel[/bold blue]"),
+            TimeElapsedColumn(),
+            console=console,
+        )
+        with progress:
+            ptask = progress.add_task("scatter", total=None)
             results = await scatter(
                 task=task,
                 n=n,
                 backend=backend,
                 backend_kwargs=backend_kwargs,
                 budget=budget,
-                parallel=parallel,
+                parallel=True,
             )
-            wall_ms = (time.perf_counter() - t0) * 1000
+
+    scatter_wall = (time.perf_counter() - scatter_start) * 1000
 
     if not results:
         console.print(
-            f"[red]All {n} agents failed.[/red] Check that {backend} is running."
+            f"\n[red]All {n} agents failed.[/red] Check that {backend} is running "
+            f"and the model is available."
         )
         sys.exit(1)
 
+    # Quick scatter stats
+    scatter_tokens = sum(r.total_tokens for r in results)
+    n_ok = len(results)
+    console.print(
+        f"  [green]\u2713[/green] {n_ok}/{n} agents returned "
+        f"[dim]({scatter_tokens:,} tokens, {scatter_wall/1000:.1f}s)[/dim]"
+    )
+
     # Gather
-    gathered = gather(results, wall_clock_ms=wall_ms, n_requested=n)
+    gathered = gather(results, wall_clock_ms=scatter_wall, n_requested=n)
 
     if raw:
-        _show_raw(gathered.texts, json_out)
+        _show_raw(gathered.texts, False)
         if save:
             _save_raw(gathered.texts, task, output_dir, model_hint=_model_dir_name(gathered.results))
         return
 
-    # Synthesize
-    with console.status("[bold blue]Synthesizing...[/bold blue]"):
+    # --- Synthesis phase ---
+    synth_start = time.perf_counter()
+    progress = Progress(
+        SpinnerColumn(),
+        TextColumn("[bold blue]Synthesizing perspectives[/bold blue]"),
+        TimeElapsedColumn(),
+        console=console,
+    )
+    with progress:
+        ptask = progress.add_task("synthesize", total=None)
         result = await synthesize(
             gathered=gathered,
             strategy=strategy,
             backend=backend,
             backend_kwargs=backend_kwargs,
         )
+    synth_wall = (time.perf_counter() - synth_start) * 1000
+    total_wall = scatter_wall + synth_wall
 
-    # Display
-    if json_out:
-        _show_json(result)
-    else:
-        _show_rich(result)
+    console.print(
+        f"  [green]\u2713[/green] Synthesis complete "
+        f"[dim]({result.synthesis_tokens:,} tokens, {synth_wall/1000:.1f}s)[/dim]"
+    )
+    console.print()
 
-    # Save to files
+    # --- Results ---
+    _show_rich(result, total_wall)
+
+    if save:
+        _save_results(result, task, output_dir)
+
+
+async def _run_pipeline_quiet(
+    task: Task,
+    n: int,
+    backend: str,
+    backend_kwargs: dict[str, Any],
+    strategy: str,
+    budget: ScatterBudget | None,
+    run_parallel: bool,
+    output_dir: Path,
+    save: bool,
+    raw: bool,
+) -> None:
+    """JSON output mode — no rich display, just data."""
+    import time
+
+    t0 = time.perf_counter()
+    results = await scatter(
+        task=task, n=n, backend=backend, backend_kwargs=backend_kwargs,
+        budget=budget, parallel=run_parallel,
+    )
+    wall_ms = (time.perf_counter() - t0) * 1000
+
+    if not results:
+        console.print_json('{"error": "all agents failed"}')
+        sys.exit(1)
+
+    gathered = gather(results, wall_clock_ms=wall_ms, n_requested=n)
+
+    if raw:
+        _show_raw(gathered.texts, True)
+        if save:
+            _save_raw(gathered.texts, task, output_dir, model_hint=_model_dir_name(gathered.results))
+        return
+
+    result = await synthesize(
+        gathered=gathered, strategy=strategy, backend=backend,
+        backend_kwargs=backend_kwargs,
+    )
+    _show_json(result)
     if save:
         _save_results(result, task, output_dir)
 
@@ -219,7 +334,7 @@ def _load_task_file(path: str) -> Task:
 def _slugify(text: str, max_len: int = 40) -> str:
     """Turn a prompt into a short filesystem-safe slug.
 
-    "Write a one-paragraph pitch for a CLI tool" → "write-a-one-paragraph-pitch-for-a-cli-tool"
+    "Write a battle plan for a naval ambush" → "write-a-battle-plan-for-a-naval-ambush"
     """
     import re
 
@@ -246,7 +361,7 @@ def _model_dir_name(results: list[Any]) -> str:
 def _build_run_dir(output_dir: Path, model_name: str, topic: str) -> Path:
     """Build the nested output path: output_dir / model / topic_timestamp.
 
-    Example: broadside_output/gemma3-1b/dotfile-pitch_20260329_143022/
+    Example: broadside_output/gemma3-1b/naval-ambush_20260329_143022/
     """
     stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     run_name = f"{topic}_{stamp}" if topic else stamp
@@ -261,7 +376,7 @@ def _save_results(result: Any, task: Task, output_dir: Path) -> None:
     Structure:
         broadside_output/
             gemma3-1b/
-                dotfile-pitch_20260329_143022/
+                naval-ambush_20260329_143022/
                     result.json
                     synthesis.txt
                     agent_1.txt
@@ -366,19 +481,26 @@ def _show_json(result: Any) -> None:
     )
 
 
-def _show_rich(result: Any) -> None:
+def _show_rich(result: Any, total_wall_ms: float | None = None) -> None:
     from broadside.synthesize import Synthesis
 
     assert isinstance(result, Synthesis)
 
-    # Stats table
-    table = Table(show_header=False, box=None, padding=(0, 2))
-    table.add_row("Agents completed", str(result.gather.n_completed))
-    table.add_row("Total tokens", f"{result.total_tokens():,}")
-    table.add_row("Wall clock", f"{result.gather.wall_clock_ms:.0f}ms")
-    table.add_row("Strategy", result.strategy)
-    console.print(table)
-    console.print()
+    # Synthesis output
+    console.print(Panel(
+        result.result,
+        title="[bold green]Synthesis[/bold green]",
+        border_style="green",
+        padding=(1, 2),
+    ))
 
-    # Synthesis
-    console.print(Panel(result.result, title="[bold green]Synthesis[/bold green]"))
+    # Stats bar
+    wall = total_wall_ms or result.gather.wall_clock_ms
+    stats_parts = [
+        f"[bold]{result.gather.n_completed}[/bold] agents",
+        f"[bold]{result.total_tokens():,}[/bold] tokens",
+        f"[bold]{wall/1000:.1f}s[/bold] total",
+        f"strategy: [bold]{result.strategy}[/bold]",
+    ]
+    sep = " \u2502 "
+    console.print(f"\n[dim]{sep.join(stats_parts)}[/dim]")

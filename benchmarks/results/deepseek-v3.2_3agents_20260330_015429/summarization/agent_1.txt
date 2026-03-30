@@ -1,0 +1,7 @@
+For a 5-person startup, **choose a monolith.** Your scarcest resource is engineering time, not scalability.
+
+**Monolith Pros:** Faster development, single deployment, easier debugging, and shared data. You can iterate on your B2B product rapidly without drowning in cross-service coordination, network failures, or distributed data nightmares.
+
+**Microservices Cons:** They introduce massive operational overhead—complex deployments, monitoring, and debugging. For a small team, this is a productivity killer. You’ll spend time building plumbing instead of features.
+
+**The tradeoff is velocity vs. theoretical scale.** You don’t have scale yet. A well-structured monolith can serve you for years. You can later break it apart *if* you ever outgrow it—most don't. Starting with microservices is premature optimization that could sink your startup. Build fast, win customers, then reconsider.

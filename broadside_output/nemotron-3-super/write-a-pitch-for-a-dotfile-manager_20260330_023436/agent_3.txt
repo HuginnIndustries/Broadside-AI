@@ -1,0 +1,96 @@
+## Pitch: **DotfileFlow – Your Dotfiles, Intelligently Managed**
+
+**Tired of wrestling with symlinks, guessing which file broke your shell, or losing hours debugging a misconfigured `vimrc` after a system upgrade?**  
+What if your dotfiles didn’t just *exist*—they *worked for you*, reliably, portably, and with zero mental overhead?
+
+---
+
+### ✨ Introducing **DotfileFlow**  
+A modern, declarative, and *human-first* dotfile manager designed for developers who value sanity over script sprawl.
+
+DotfileFlow doesn’t just copy files—it **orchestrates** your environment.  
+It turns chaos into clarity, fragility into resilience, and manual drudgery into one-command confidence.
+
+---
+
+### 🔧 Why DotfileFlow? (The Pain Points We Solve)
+
+| Problem | Other Tools | DotfileFlow |
+|-------|-------------|-------------|
+| Manual symlinking → fragile, error-prone | ✘ Stow, GNU Stow, chezmoi (partial) | ✅ Declarative YAML/TOML manifests — *describe what you want, not how to get it* |
+| No version control visibility | ✘ Often hides changes in hidden dirs | ✅ Full Git integration — every change is tracked, reviewable, revertible |
+| Platform-specific hacks (macOS/Linux/WSL) | ✘ Scripts littered with `if [ "$OSTYPE" = ... ]` | ✅ Built-in conditionals: `when: darwin`, `when: linux && !wsl` |
+| Hard to share or onboard new machines | ✘ “Just run this 50-line script” | ✅ One command: `dotflow bootstrap --profile dev` — reproducible, shareable profiles |
+| No safety nets — overwrites without warning | ✘ Dangerous `cp -f` or `ln -sf` | ✅ Dry-runs, backups, conflict detection, and interactive merge prompts |
+| Hard to understand what’s actually active | ✘ “Did I even install that plugin?” | ✅ `dotflow status` — clear, color-coded tree of managed vs. unmanaged files |
+| No plugin/theme ecosystem | ✘ Isolated, reinvented wheels | ✅ Official registry: `dotflow install theme/monokai-pro`, `dotflow add plugin/fzf-preview` |
+
+---
+
+### 🚀 Key Features
+
+- **Declarative Configuration**: Define your ideal state in `dotflow.yaml`:
+  ```yaml
+  files:
+    - src: ~/.dotfiles/zshrc
+      dest: ~/.zshrc
+      when: shell == zsh
+    - src: ~/.dotfiles/nvim/init.lua
+      dest: ~/.config/nvim/init.lua
+      when: has(nvim)
+  hooks:
+    post-install:
+      - nvim --headless +PlugInstall +qall
+  ```
+
+- **Profiles**: Switch between `work`, `personal`, `minimal`, or `gaming` setups with one flag.
+- **Cross-Platform**: Native support for macOS, Linux, WSL2, and even Termux.
+- **Backup & Rollback**: Every change is snapshotted. `dotflow undo` gets you back.
+- **Diff-Aware**: See exactly what changed before applying — no surprises.
+- **Community Powered**: Official registry of community-maintained configs (stars, themes, plugins, toolchains).
+- **Zero Dependencies**: Single binary. Written in Rust. Blazing fast. No Python/Node/JVM needed.
+
+---
+
+### 💡 Who Is This For?
+
+- **DevOps & SREs** who need reproducible dev/prod parity across 10+ machines.
+- **Dotfile hoarders** who’ve accumulated 200+ files over 5 years and are terrified to touch them.
+- **New devs** who want to start strong — not spend day one copying/pasting from blogs.
+- **Teams** who want standardized, version-controlled dev environments (think: “this works on my machine” → “this works on *every* machine”).
+
+---
+
+### 🌱 The Vision
+
+DotfileFlow isn’t just a tool — it’s the **foundation of your digital workspace**.  
+Imagine opening a new laptop, running:
+```bash
+curl -fsSL https://dotflow.sh/install | sh
+dotflow bootstrap --profile my-dev
+```
+…and 90 seconds later, your shell, editor, git, tmux, and CLI tools are *exactly* how you left them — with plugins installed, themes applied, and aliases ready.
+
+No guesswork. No Friday-night debugging. Just flow.
+
+---
+
+### 📦 Get Started Today
+
+👉 **Install**: `brew install dotflow` (or download the binary)  
+👉 **Init**: `dotflow init` — it scans your $HOME and suggests a manifest  
+👉 **Share**: Export your profile as a `.dotflowprofile` and share it with your team  
+👉 **Contribute**: Join the growing community at [github.com/dotflow/dotflow](https://github.com/dotflow/dotflow)
+
+---
+
+> **DotfileFlow: Because your environment should serve you — not the other way around.**
+
+Stop managing files. Start shaping your workflow.
+
+**DotfileFlow — Configure once. Work everywhere.**  
+[dotflow.sh](https://dotflow.sh) | @dotflowhq
+
+--- 
+
+*Built by developers, for developers. No fluff. Just flow.*

@@ -1,0 +1,93 @@
+{
+  "metadata": {
+    "timestamp": "2026-03-30 06:18 UTC",
+    "backend": "ollama",
+    "model": "gemma3:1b",
+    "n_agents": 3,
+    "backend_kwargs": {
+      "model": "gemma3:1b"
+    }
+  },
+  "results": [
+    {
+      "task": "creative_pitch",
+      "n_agents": 3,
+      "backend": "ollama",
+      "model": "gemma3:1b",
+      "parallel_wall_ms": 17307.7,
+      "sequential_wall_ms": 16103.1,
+      "speedup": 0.93,
+      "scatter_tokens": 509,
+      "synthesis_tokens": 1146,
+      "total_tokens": 1655,
+      "sequential_tokens": 542,
+      "token_multiplier": 9.2,
+      "scatter_only_multiplier": 2.8,
+      "diversity_score": 0.755
+    },
+    {
+      "task": "analytical_comparison",
+      "n_agents": 3,
+      "backend": "ollama",
+      "model": "gemma3:1b",
+      "parallel_wall_ms": 158082.7,
+      "sequential_wall_ms": 190282.1,
+      "speedup": 1.2,
+      "scatter_tokens": 3927,
+      "synthesis_tokens": 5045,
+      "total_tokens": 8972,
+      "sequential_tokens": 4281,
+      "token_multiplier": 6.3,
+      "scatter_only_multiplier": 2.8,
+      "diversity_score": 0.732
+    },
+    {
+      "task": "classification",
+      "n_agents": 3,
+      "backend": "ollama",
+      "model": "gemma3:1b",
+      "parallel_wall_ms": 12013.9,
+      "sequential_wall_ms": 10418.3,
+      "speedup": 0.87,
+      "scatter_tokens": 509,
+      "synthesis_tokens": 676,
+      "total_tokens": 1185,
+      "sequential_tokens": 502,
+      "token_multiplier": 7.1,
+      "scatter_only_multiplier": 3.0,
+      "diversity_score": 0.75
+    },
+    {
+      "task": "summarization",
+      "n_agents": 3,
+      "backend": "ollama",
+      "model": "gemma3:1b",
+      "parallel_wall_ms": 30589.3,
+      "sequential_wall_ms": 42915.5,
+      "speedup": 1.4,
+      "scatter_tokens": 841,
+      "synthesis_tokens": 1246,
+      "total_tokens": 2087,
+      "sequential_tokens": 921,
+      "token_multiplier": 6.8,
+      "scatter_only_multiplier": 2.7,
+      "diversity_score": 0.803
+    },
+    {
+      "task": "code_review",
+      "n_agents": 3,
+      "backend": "ollama",
+      "model": "gemma3:1b",
+      "parallel_wall_ms": 187930.1,
+      "sequential_wall_ms": 182648.4,
+      "speedup": 0.97,
+      "scatter_tokens": 4208,
+      "synthesis_tokens": 5230,
+      "total_tokens": 9438,
+      "sequential_tokens": 4310,
+      "token_multiplier": 6.6,
+      "scatter_only_multiplier": 2.9,
+      "diversity_score": 0.735
+    }
+  ]
+}

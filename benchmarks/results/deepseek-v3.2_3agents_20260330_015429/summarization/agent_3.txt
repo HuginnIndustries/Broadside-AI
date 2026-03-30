@@ -1,0 +1,11 @@
+For a 5-engineer startup, the monolith is almost always correct. Choose microservices only if you have proven, extreme scaling needs that cannot be solved with better monolith design.
+
+**Monolith pros:** Simple to develop, test, and deploy. One codebase, one database. Your team can move incredibly fast, which is all that matters right now. Debugging is straightforward.
+
+**Monolith cons:** Can become a tangled "big ball of mud" if discipline lapses, limiting long-term agility and forcing a costly rewrite later.
+
+**Microservices pros:** Independent scaling and deployment per service. Enables clear team ownership if you grow to 50+ engineers.
+
+**Microservices cons (the killers for you):** They multiply complexity—distributed debugging, data consistency, network failures, and convoluted deployments. With 5 engineers, you'll spend more time on plumbing than product. It's premature optimization that will slow you to a crawl.
+
+**Verdict:** Build a well-structured monolith. Focus on clean modules *within* the monolith. Re-evaluate only after you have 50+ engineers and proven scaling pain. Speed is your only advantage; don't sacrifice it for architecture you don't need.

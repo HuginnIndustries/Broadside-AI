@@ -1,0 +1,124 @@
+## Issues Found
+
+### **Critical Severity**
+
+1. **SQL Injection Vulnerability**
+   - Direct string interpolation of user input (`{key}` and `{val}`) into SQL query
+   - Attackers could inject SQL code through the `filters` parameter
+   - **Example exploit**: `filters={"1=1); DROP TABLE users; --": ""}`
+
+2. **Unsafe password handling**
+   - Returns decrypted passwords to caller
+   - Passwords should never leave the system in decryptable/plain text form
+   - This violates basic security principles
+
+### **High Severity**
+
+3. **Default mutable argument**
+   - `filters={}` creates a single dictionary shared across all function calls
+   - Mutating this default affects future calls
+   - Should use `None` as default: `def get_users(db, filters=None)`
+
+4. **No input validation/sanitization**
+   - Keys and values are used directly without validation
+   - Could allow injection or cause errors with special characters
+
+### **Medium Severity**
+
+5. **Inefficient string concatenation**
+   - Using `+=` in a loop creates new string objects each iteration
+   - For many filters, this is O(n²) string operations
+   - Better to build list and join
+
+6. **No error handling**
+   - No try/except blocks for database operations or decryption
+   - Database connection errors or decryption failures crash the function
+
+7. **Resource management issues**
+   - Doesn't ensure database cursor/result set is properly closed
+   - Could leak database connections or memory
+
+8. **Hard-coded table/column names**
+   - `users` table and `password` column names are hard-coded
+   - Makes function less reusable for other tables
+
+### **Low Severity**
+
+9. **Poor SQL style**
+   - `WHERE 1=1` is unnecessary when building dynamic queries
+   - Better to build conditions list and join with `" AND "`
+
+10. **Selecting all columns (`SELECT *`)**
+    - Returns unnecessary data, affecting performance
+    - Better to specify required columns explicitly
+
+11. **Inconsistent naming/formatting**
+    - Mixed single and double quotes in f-strings
+    - No type hints for parameters or return value
+
+12. **Inefficient memory usage**
+    - Builds complete list of users before returning
+    - Could use generator for large result sets
+
+## Suggested Improvements
+
+```python
+from typing import Dict, List, Optional, Generator, Any
+import contextlib
+
+def get_users(
+    db, 
+    filters: Optional[Dict[str, Any]] = None
+) -> Generator[Dict[str, Any], None, None]:
+    """
+    Retrieve users from database with optional filters.
+    
+    Args:
+        db: Database connection object
+        filters: Dictionary of column=value pairs to filter by
+        
+    Yields:
+        Dictionary containing user data (without passwords)
+        
+    Raises:
+        ValueError: If filter keys contain unsafe characters
+        DatabaseError: For database-related errors
+    """
+    if filters is None:
+        filters = {}
+    
+    # Validate filter keys to prevent SQL injection via column names
+    allowed_columns = {"username", "email", "status", "created_at"}  # Example allowed columns
+    conditions = []
+    params = []
+    
+    for key, val in filters.items():
+        # Only allow safe column names
+        if key not in allowed_columns:
+            raise ValueError(f"Invalid filter column: {key}")
+        conditions.append(f"{key} = ?")
+        params.append(val)
+    
+    # Build query safely with parameterized values
+    query = "SELECT id, username, email, created_at FROM users"
+    if conditions:
+        query += " WHERE " + " AND ".join(conditions)
+    
+    # Use context manager to ensure resources are cleaned up
+    with contextlib.closing(db.cursor()) as cursor:
+        cursor.execute(query, params)
+        
+        for row in cursor.fetchall():
+            user = dict(row)
+            # Do NOT decrypt or include passwords in results
+            # Password verification should happen in separate auth function
+            yield user
+```
+
+## Key Changes:
+1. **Security**: Use parameterized queries instead of string interpolation
+2. **Security**: Remove password decryption entirely from this function
+3. **API**: Change to generator for memory efficiency
+4. **Safety**: Validate filter keys against allowed columns
+5. **Reliability**: Add error handling and resource management
+6. **Best Practices**: Use `None` for default arguments, add type hints

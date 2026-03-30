@@ -1,0 +1,16 @@
+{
+  "task": "classification",
+  "n_agents": 3,
+  "backend": "ollama",
+  "model": "nemotron-3-super",
+  "parallel_wall_ms": 3988.2,
+  "sequential_wall_ms": 13762.1,
+  "speedup": 3.45,
+  "scatter_tokens": 640,
+  "synthesis_tokens": 927,
+  "total_tokens": 1567,
+  "sequential_tokens": 675,
+  "token_multiplier": 7.0,
+  "scatter_only_multiplier": 2.8,
+  "diversity_score": 0.603
+}

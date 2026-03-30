@@ -1,0 +1,7 @@
+For a startup with 5 engineers building a B2B SaaS product, **start with a monolith** — microservices are a premature optimization.
+
+Monoliths let your small team ship fast: one codebase, one deploy pipeline, shared data, and minimal ops overhead. You can iterate on features, fix bugs, and onboard new hires without wrestling with service boundaries, network latency, distributed tracing, or eventual consistency hell. Speed to market and product-market fit are your only priorities — and monoliths maximize engineering velocity.
+
+Microservices introduce massive complexity: inter-service communication, failure modes, data consistency challenges, observability sprawl, and DevOps overhead. With only 5 engineers, you’ll spend more time managing infrastructure than delivering customer value. Premature decomposition leads to brittle systems, slow feedback loops, and team fragmentation — exactly what a lean startup can’t afford.
+
+Only consider microservices *after* you’ve validated demand, hit scaling limits (e.g., one team blocked by another’s deploy), or have clear domain boundaries with independent release cycles. Until then, a well-structured monolith — modular, tested, and deployable as a unit — gives you the agility to win. Save the distributed system pain for when you have 20+ engineers and real traffic. Opinionated? Yes. Correct for your stage? Absolutely.

@@ -1,0 +1,16 @@
+{
+  "task": "classification",
+  "n_agents": 3,
+  "backend": "ollama",
+  "model": "deepseek-v3.2",
+  "parallel_wall_ms": 22043.2,
+  "sequential_wall_ms": 32657.3,
+  "speedup": 1.48,
+  "scatter_tokens": 1531,
+  "synthesis_tokens": 755,
+  "total_tokens": 2286,
+  "sequential_tokens": 1606,
+  "token_multiplier": 4.3,
+  "scatter_only_multiplier": 2.9,
+  "diversity_score": 0.6
+}

@@ -1,0 +1,5 @@
+{
+  "label": "technical_support",
+  "confidence": 0.95,
+  "reasoning": "The user describes a persistent technical problem with the CSV export feature (hanging at 99%) that is blocking a critical business need (board meeting tomorrow). This is clearly a request for help resolving a malfunctioning product feature, not a billing complaint, feature suggestion, praise, or spam. The urgency and specificity of the technical failure align strongly with technical support classification."
+}

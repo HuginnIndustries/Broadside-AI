@@ -1,0 +1,16 @@
+{
+  "task": "code_review",
+  "n_agents": 3,
+  "backend": "ollama",
+  "model": "nemotron-3-super",
+  "parallel_wall_ms": 108628.0,
+  "sequential_wall_ms": 102345.9,
+  "speedup": 0.94,
+  "scatter_tokens": 10582,
+  "synthesis_tokens": 12538,
+  "total_tokens": 23120,
+  "sequential_tokens": 9521,
+  "token_multiplier": 7.3,
+  "scatter_only_multiplier": 3.3,
+  "diversity_score": 0.737
+}

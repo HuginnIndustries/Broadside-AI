@@ -1,0 +1,7 @@
+```json
+{
+  "label": "billing_issue",
+  "confidence": "0.95",
+  "reasoning": "The customer is explicitly stating a problem with exporting data – a common issue that often relates to billing or data access. The urgency further supports this classification."
+}
+```

@@ -1,0 +1,1 @@
+{'label': 'technical_support', 'confidence': 0.95, 'reasoning': 'The message describes a technical problem with data export functionality and requests urgent assistance, fitting the technical_support category.'}

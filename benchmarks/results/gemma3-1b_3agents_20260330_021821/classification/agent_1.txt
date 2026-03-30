@@ -1,0 +1,7 @@
+```json
+{
+    "label": "billing_issue",
+    "confidence": 0.95,
+    "reasoning": "The customer is experiencing a problem (CSV download failure) that is impacting their ability to complete a task (export data) and is expressing urgency, suggesting a billing or service-related issue."
+}
+```

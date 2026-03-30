@@ -1,0 +1,17 @@
+For a startup with just 5 engineers building a B2B SaaS product, a monolith is almost always the better choice — microservices are premature optimization.
+
+**Monolith Pros:**  
+- Faster initial development: one codebase, one deploy, simpler testing and debugging.  
+- Lower operational overhead: no service discovery, network latency, distributed tracing, or complex CI/CD pipelines.  
+- Easier refactoring: shared data models and transactions mean fewer consistency headaches.  
+- Team focus: all engineers can work on features, not infrastructure plumbing.  
+- Cost-effective: less DevOps tooling, fewer cloud resources, simpler monitoring.
+
+**Microservices Cons (for your scale):**  
+- Massive cognitive load: 5 engineers splitting across services means context-switching hell.  
+- Distributed system pitfalls: network failures, eventual consistency, debugging across services — all slow you down.  
+- Over-engineering: you’re solving scaling problems you don’t yet have.  
+- Slower iteration: deploying a tiny change might require coordinating 3+ services.  
+- Illusion of scalability: you’ll spend weeks setting up Kubernetes, Istio, and observability tools instead of shipping value to customers.
+
+**Verdict:** Start monolithic. Modularize internally (clean boundaries, good tests). Only split into microservices when you have clear, measurable scaling or team autonomy needs — likely *after* you’ve hit product-market fit and grown to 15+ engineers. Until then, velocity > theoretical scalability. Ship fast, learn faster. Microservices are for enterprises, not early-stage startups fighting for survival.

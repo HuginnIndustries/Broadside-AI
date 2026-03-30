@@ -1,0 +1,101 @@
+Here's a comprehensive review of the Python function with all identified issues:
+
+## Critical Issues
+
+**1. SQL Injection Vulnerability**
+- **Severity: CRITICAL**
+- **Location**: Line 3-4 - Direct string interpolation in SQL query
+- **Issue**: `f" AND {key} = '{val}'"` allows attackers to inject malicious SQL
+- **Impact**: Complete database compromise, data theft, data destruction
+
+**2. Mutable Default Argument**
+- **Severity: CRITICAL** 
+- **Location**: Line 1 - `filters={}`
+- **Issue**: Same dictionary object reused across function calls, causing state persistence
+- **Impact**: Function behavior becomes unpredictable and buggy
+
+## High Issues
+
+**3. Password Security Violation**
+- **Severity: HIGH**
+- **Location**: Line 8 - Password decryption and return
+- **Issue**: Passwords should never be decrypted and returned to callers
+- **Impact**: Major security vulnerability, violates security best practices
+
+**4. Unvalidated Column Names**
+- **Severity: HIGH**
+- **Location**: Line 4 - `{key}` in query
+- **Issue**: Filter keys become column names without validation
+- **Impact**: Potential for SQL injection, database errors, information disclosure
+
+## Medium Issues
+
+**5. Missing Error Handling**
+- **Severity: MEDIUM**
+- **Location**: Throughout function
+- **Issue**: No handling for database errors, decryption failures, or invalid data
+- **Impact**: Application crashes, poor user experience
+
+**6. Performance Issues**
+- **Severity: MEDIUM**
+- **Location**: Line 6-9 - Row processing loop
+- **Issue**: Inefficient row-by-row processing and dictionary conversion
+- **Impact**: Poor performance with large datasets
+
+**7. No Input Validation**
+- **Severity: MEDIUM**
+- **Location**: Function parameters
+- **Issue**: No validation of `db` object or `filters` content
+- **Impact**: Runtime errors, unexpected behavior
+
+## Low Issues
+
+**8. Style Issues**
+- **Severity: LOW**
+- **Location**: Various
+- **Issues**:
+  - Inconsistent variable naming (`val` vs `value`)
+  - Missing docstring
+  - No type hints
+  - Inefficient list building pattern
+
+## Recommended Fixes
+
+```python
+def get_users(db, filters: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+    """
+    Retrieve users from database with optional filters.
+    
+    Args:
+        db: Database connection object
+        filters: Optional dictionary of column:value filters
+        
+    Returns:
+        List of user dictionaries (excluding passwords)
+    """
+    if filters is None:
+        filters = {}
+    
+    # Validate column names against whitelist
+    allowed_columns = {'name', 'email', 'status', 'created_at'}
+    invalid_columns = set(filters.keys()) - allowed_columns
+    if invalid_columns:
+        raise ValueError(f"Invalid filter columns: {invalid_columns}")
+    
+    # Use parameterized query
+    query = "SELECT id, name, email, status, created_at FROM users WHERE 1=1"
+    params = []
+    
+    for column, value in filters.items():
+        query += f" AND {column} = ?"
+        params.append(value)
+    
+    try:
+        results = db.execute(query, params)
+        return [dict(row) for row in results]  # Don't include passwords
+    except Exception as e:
+        logger.error(f"Database error in get_users: {e}")
+        raise
+```
+
+The most critical fixes are addressing the SQL injection vulnerability and removing password exposure.

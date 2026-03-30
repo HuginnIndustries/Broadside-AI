@@ -1,0 +1,124 @@
+# Database Comparison for Read-Heavy Analytics (10M Rows)
+
+## Executive Summary
+
+| Database | Best For | Key Strength | Main Limitation |
+|----------|----------|--------------|----------------|
+| **DuckDB** | Single-machine analytics | Fastest analytical queries | Limited scalability |
+| **PostgreSQL** | Mixed OLTP/OLAP workloads | Most mature ecosystem | Slower analytical queries |
+| **SQLite** | Simple embedded analytics | Minimal complexity | Poor analytical performance |
+
+---
+
+## Detailed Comparison
+
+### 🚀 Query Speed
+
+| Database | Aggregations | Complex Joins | Window Functions | Columnar Scans |
+|----------|-------------|---------------|------------------|----------------|
+| **DuckDB** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
+| **PostgreSQL** | ⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐ |
+| **SQLite** | ⭐⭐ | ⭐⭐ | ⭐⭐ | ⭐ |
+
+**Performance Characteristics:**
+- **DuckDB**: 5-10x faster for analytical queries due to vectorized execution and columnar processing
+- **PostgreSQL**: Good performance with proper indexing; benefits from parallel query execution
+- **SQLite**: Row-based storage limits analytical performance; single-threaded execution
+
+### 💾 Memory Usage
+
+| Database | Memory Efficiency | Out-of-Core Processing | Memory Control |
+|----------|------------------|----------------------|----------------|
+| **DuckDB** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ |
+| **PostgreSQL** | ⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
+| **SQLite** | ⭐⭐⭐⭐ | ⭐⭐ | ⭐⭐ |
+
+**Memory Patterns:**
+- **DuckDB**: ~200-500MB for 10M rows; excellent compression; automatic spill-to-disk
+- **PostgreSQL**: ~1-2GB with shared buffers; configurable memory pools
+- **SQLite**: ~100-300MB; minimal overhead but limited memory optimization
+
+### 🔧 Operational Complexity
+
+| Database | Setup | Maintenance | Monitoring | Scaling |
+|----------|--------|-------------|------------|---------|
+| **SQLite** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐ | ⭐ |
+| **DuckDB** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐ |
+| **PostgreSQL** | ⭐⭐ | ⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ |
+
+**Operational Details:**
+
+**SQLite:**
+- Zero configuration
+- No server process
+- Limited tooling for performance analysis
+
+**DuckDB:**
+- Embedded deployment
+- Minimal configuration needed
+- Built-in profiling tools
+
+**PostgreSQL:**
+- Requires server setup and tuning
+- Extensive configuration options
+- Rich monitoring ecosystem
+
+### 🌟 Ecosystem Maturity
+
+| Database | Language Support | Tools | Extensions | Community |
+|----------|-----------------|--------|------------|-----------|
+| **PostgreSQL** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
+| **SQLite** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐ | ⭐⭐⭐⭐ |
+| **DuckDB** | ⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐ |
+
+**Ecosystem Highlights:**
+
+**PostgreSQL:**
+- 30+ years of development
+- Extensive third-party tools (pgAdmin, Grafana, etc.)
+- Rich extension ecosystem (PostGIS, TimescaleDB)
+
+**SQLite:**
+- Universal compatibility
+- Mature but limited analytical tooling
+- Stable API with backward compatibility
+
+**DuckDB:**
+- Growing rapidly (5+ years old)
+- Native Pandas/R integration
+- Emerging tool support
+
+---
+
+## Recommendations
+
+### Choose **DuckDB** if:
+- Primary workload is analytical queries
+- Single-machine deployment is sufficient
+- You need maximum query performance
+- Data fits comfortably on one machine
+
+### Choose **PostgreSQL** if:
+- You need both transactional and analytical capabilities
+- Require multi-user concurrent access
+- Need extensive ecosystem integration
+- Plan to scale beyond single machine
+
+### Choose **SQLite** if:
+- Simplicity is the top priority
+- Analytical performance is acceptable
+- Embedded deployment is required
+- Minimal operational overhead is critical
+
+---
+
+## Performance Benchmark (Estimated)
+
+| Query Type | DuckDB | PostgreSQL | SQLite |
+|------------|--------|------------|---------|
+| `GROUP BY` aggregation | 2s | 8s | 25s |
+| Multi-table JOIN | 3s | 12s | 45s |
+| Window functions | 1.5s | 6s | 20s |
+| Full table scan | 0.8s | 4s | 15s |
+
+*Note: Benchmarks are estimates for 10M rows on modern hardware. Actual performance varies with data characteristics and query complexity.*

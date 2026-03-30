@@ -1,0 +1,73 @@
+**Pitch: DotManager — The Intelligent Dotfile Manager for Developers Who Value Clarity, Control, and Consistency**
+
+Tired of wrestling with scattered `.bashrc`, `.vimrc`, `.gitconfig`, and `~/.config` files across machines?  
+Frustrated by manual symlinks, brittle scripts, or over-engineered tools that require a PhD just to install?  
+You’re not alone. Managing dotfiles should be *simple*, *safe*, and *scalable* — not a weekend project every time you get a new laptop.
+
+Introducing **DotManager**: the dotfile manager built for humans who code.
+
+---
+
+### ✅ What DotManager Does (So You Don’t Have To)
+- **One Command Setup**: `dotmanager init` scans your home directory, intelligently detects common dotfiles, and proposes a clean, version-controlled structure — no guesswork.
+- **Declarative, Not Imperative**: Define your desired state in a simple `dotmanager.yml`:
+  ```yaml
+  files:
+    - src: ~/.bashrc
+      dest: configs/shell/bashrc
+    - src: ~/.gitconfig
+      dest: configs/git/gitconfig
+    - src: ~/.config/nvim
+      dest: configs/neovim
+  ```
+  DotManager handles symlinking, backups, and conflict resolution — automatically.
+- **Cross-Platform & Shell-Agnostic**: Works on macOS, Linux, and WSL. No Bash/Zsh/Fish bias — it just works.
+- **Smart Conflict Detection**: Before overwriting, DotManager shows you a diff, backs up the original, and lets you approve, edit, or skip — no silent data loss.
+- **Encrypted Secrets (Optional)**: Store API keys, SSH configs, or AWS credentials in a `.dotmanager/secrets/` vault — encrypted with age or GPG, decrypted only on your trusted machines.
+- **Sync Across Devices**: Push your dotfiles to any Git host (GitHub, GitLab, self-hosted). `dotmanager sync` pulls and applies changes securely — ideal for devs jumping between work, home, and cloud machines.
+- **Plugin Ecosystem**: Want to auto-install Homebrew brews, npm globals, or VS Code extensions? DotManager’s plugin system lets you extend behavior without forking the core.
+
+---
+
+### 💡 Why DotManager Beats the Alternatives
+| Tool | Pain Point | DotManager’s Edge |
+|------|------------|-------------------|
+| Manual symlinks | Fragile, hard to track | Declarative config + auto-sync |
+| Chezmoi | Overly complex templating | Simple YAML, no Go templates needed |
+| Dotfiles (GitHub gists) | No conflict resolution, no secrets | Built-in backup, diff, encryption |
+| Stow | Only symlinks, no state management | Full lifecycle: backup, restore, validate, encrypt |
+| Home Manager (NixOS) | Locks you into Nix | Works on any distro, no Nix required |
+
+DotManager gives you the power of NixOS-style declarative config — without the learning curve or ecosystem lock-in.
+
+---
+
+### 🚀 Who Is This For?
+- **Solo developers** tired of reconfiguring every new machine.
+- **Team leads** wanting standardized dev environments across engineers.
+- **DevOps engineers** who need reproducible, auditable workstation setups.
+- **Anyone** who’s ever lost a custom `~/.vimrc` and cried into their coffee.
+
+---
+
+### 🌟 The Vision
+DotManager isn’t just another dotfile tool — it’s the **Git for your personal environment**.  
+Just as Git versioned your code, DotManager versions your *workflow*.  
+One repo. One command. One consistent dev experience — everywhere you go.
+
+**Try it today:**  
+```bash
+curl -sfL https://dotmanager.dev/install.sh | sh
+dotmanager init
+```
+
+Your future self — on that new laptop, at 2 a.m., with a working shell and all your aliases intact — will thank you.
+
+---
+
+**DotManager: Your dotfiles, finally under control.**  
+🌐 [dotmanager.dev](https://dotmanager.dev) | 🐦 @dotmanager | 💻 GitHub: github.com/dotmanager/dotmanager
+
+---
+
+*Built by developers, for developers. No fluff. No bloat. Just your config, done right.*

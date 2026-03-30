@@ -29,10 +29,20 @@ class AnthropicBackend(Backend):
         max_tokens: int = 4096,
         **kwargs: Any,
     ) -> None:
+        import os
+
+        resolved_key = api_key or os.environ.get("ANTHROPIC_API_KEY")
+        if not resolved_key:
+            raise RuntimeError(
+                "Anthropic API key not found. Set it with:\n"
+                "  Windows CMD:    set ANTHROPIC_API_KEY=sk-...\n"
+                "  PowerShell:     $env:ANTHROPIC_API_KEY=\"sk-...\"\n"
+                "  macOS/Linux:    export ANTHROPIC_API_KEY=sk-..."
+            )
+
         self.model = model
         self.max_tokens = max_tokens
-        # anthropic client reads ANTHROPIC_API_KEY from env if not passed
-        self._client = anthropic.AsyncAnthropic(api_key=api_key)
+        self._client = anthropic.AsyncAnthropic(api_key=resolved_key)
 
     async def complete(self, prompt: str, **kwargs: Any) -> AgentResult:
         t0 = time.perf_counter()

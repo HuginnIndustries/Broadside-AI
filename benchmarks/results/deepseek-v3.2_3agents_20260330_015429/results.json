@@ -1,0 +1,93 @@
+{
+  "metadata": {
+    "timestamp": "2026-03-30 05:54 UTC",
+    "backend": "ollama",
+    "model": "deepseek-v3.2",
+    "n_agents": 3,
+    "backend_kwargs": {
+      "model": "deepseek-v3.2:cloud"
+    }
+  },
+  "results": [
+    {
+      "task": "creative_pitch",
+      "n_agents": 3,
+      "backend": "ollama",
+      "model": "deepseek-v3.2",
+      "parallel_wall_ms": 16848.9,
+      "sequential_wall_ms": 28275.7,
+      "speedup": 1.68,
+      "scatter_tokens": 1039,
+      "synthesis_tokens": 1370,
+      "total_tokens": 2409,
+      "sequential_tokens": 953,
+      "token_multiplier": 7.6,
+      "scatter_only_multiplier": 3.3,
+      "diversity_score": 0.84
+    },
+    {
+      "task": "analytical_comparison",
+      "n_agents": 3,
+      "backend": "ollama",
+      "model": "deepseek-v3.2",
+      "parallel_wall_ms": 70458.0,
+      "sequential_wall_ms": 119694.9,
+      "speedup": 1.7,
+      "scatter_tokens": 4527,
+      "synthesis_tokens": 3091,
+      "total_tokens": 7618,
+      "sequential_tokens": 4962,
+      "token_multiplier": 4.6,
+      "scatter_only_multiplier": 2.7,
+      "diversity_score": 0.731
+    },
+    {
+      "task": "classification",
+      "n_agents": 3,
+      "backend": "ollama",
+      "model": "deepseek-v3.2",
+      "parallel_wall_ms": 22043.2,
+      "sequential_wall_ms": 32657.3,
+      "speedup": 1.48,
+      "scatter_tokens": 1531,
+      "synthesis_tokens": 755,
+      "total_tokens": 2286,
+      "sequential_tokens": 1606,
+      "token_multiplier": 4.3,
+      "scatter_only_multiplier": 2.9,
+      "diversity_score": 0.6
+    },
+    {
+      "task": "summarization",
+      "n_agents": 3,
+      "backend": "ollama",
+      "model": "deepseek-v3.2",
+      "parallel_wall_ms": 29570.7,
+      "sequential_wall_ms": 26800.7,
+      "speedup": 0.91,
+      "scatter_tokens": 1363,
+      "synthesis_tokens": 1334,
+      "total_tokens": 2697,
+      "sequential_tokens": 1217,
+      "token_multiplier": 6.6,
+      "scatter_only_multiplier": 3.4,
+      "diversity_score": 0.812
+    },
+    {
+      "task": "code_review",
+      "n_agents": 3,
+      "backend": "ollama",
+      "model": "deepseek-v3.2",
+      "parallel_wall_ms": 114950.4,
+      "sequential_wall_ms": 175269.7,
+      "speedup": 1.52,
+      "scatter_tokens": 8258,
+      "synthesis_tokens": 5345,
+      "total_tokens": 13603,
+      "sequential_tokens": 7837,
+      "token_multiplier": 5.2,
+      "scatter_only_multiplier": 3.2,
+      "diversity_score": 0.674
+    }
+  ]
+}

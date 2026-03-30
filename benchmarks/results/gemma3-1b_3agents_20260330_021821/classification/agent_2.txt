@@ -1,0 +1,7 @@
+```json
+{
+  "label": "billing_issue",
+  "confidence": 0.9,
+  "reasoning": "The customer is explicitly stating a problem (data export failing) and requesting help, indicating a billing or technical issue related to their data."
+}
+```

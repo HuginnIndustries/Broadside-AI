@@ -1,0 +1,16 @@
+{
+  "task": "analytical_comparison",
+  "n_agents": 3,
+  "backend": "ollama",
+  "model": "gemma3:1b",
+  "parallel_wall_ms": 158082.7,
+  "sequential_wall_ms": 190282.1,
+  "speedup": 1.2,
+  "scatter_tokens": 3927,
+  "synthesis_tokens": 5045,
+  "total_tokens": 8972,
+  "sequential_tokens": 4281,
+  "token_multiplier": 6.3,
+  "scatter_only_multiplier": 2.8,
+  "diversity_score": 0.732
+}

@@ -1,0 +1,42 @@
+# Comparison: SQLite vs PostgreSQL vs DuckDB for Read-Heavy Analytics (10M Rows)
+
+## **Structured Comparison**
+
+| Aspect | SQLite | PostgreSQL | DuckDB |
+|--------|--------|------------|---------|
+| **Query Speed (Analytics)** | **Slow** - Row-oriented storage, limited parallelization | **Good** - Advanced optimizations, but row-oriented for standard tables | **Excellent** - Columnar storage, vectorized execution, OLAP-optimized |
+| **Memory Usage** | **Low** - Processes data incrementally, minimal overhead | **High** - Larger buffer pools needed for performance | **Moderate** - Columnar format reduces I/O, but vectorized processing uses memory |
+| **Operational Complexity** | **Minimal** - Single file, zero configuration, embedded | **High** - Requires installation, configuration, maintenance, tuning | **Low** - Embedded, simple deployment, minimal administration |
+| **Ecosystem Maturity** | **Very High** - Ubiquitous support, stable API, extensive tooling | **Very High** - Enterprise-grade, vast extensions, robust tooling | **Growing** - Modern toolchain, good language support, but newer |
+| **Concurrent Reads** | Limited - Single writer, multiple readers with contention | **Excellent** - MVCC, sophisticated concurrency control | Good - Multiple readers, but embedded architecture limits scaling |
+| **Analytical Features** | Basic - Standard SQL, window functions (recent versions) | **Rich** - CTEs, window functions, materialized views, extensions | **Specialized** - Built for analytics: nested data, parquet, sampling |
+| **Data Format** | Row-oriented B-tree | Row-oriented (default), columnar via extensions | **Native columnar storage** |
+| **Best For** | Small-medium datasets, embedded apps, prototyping | Complex queries, concurrent workloads, enterprise systems | **Read-heavy analytics, data science, embedded BI** |
+
+## **Recommendation for 10M Row Analytics**
+
+| Database | Recommendation | Key Consideration |
+|----------|----------------|-------------------|
+| **DuckDB** | **Best choice** for this specific workload | Superior query performance for analytical queries on 10M rows with minimal operational overhead |
+| **PostgreSQL** | Good alternative if existing infrastructure or need for concurrent writes | Can be tuned for analytics, but requires more expertise and resources |
+| **SQLite** | Not recommended for this workload | Will struggle with complex analytical queries at this scale |
+
+## **Performance Nuances**
+
+1. **Query Patterns Matter**:
+   - **Simple aggregations**: DuckDB >> PostgreSQL > SQLite
+   - **Complex joins**: PostgreSQL ≥ DuckDB >> SQLite
+   - **Ad-hoc exploration**: DuckDB excels
+
+2. **Memory/Storage Trade-offs**:
+   - **DuckDB**: Benefits from available RAM for vectorized processing
+   - **PostgreSQL**: Performance scales with buffer pool configuration
+   - **SQLite**: Minimal memory requirements but slower execution
+
+3. **Implementation Considerations**:
+   - **DuckDB**: Use `.parquet` files for direct querying without ingestion
+   - **PostgreSQL**: Consider `pgvector` or `citus` for specialized analytics
+   - **SQLite**: Practical only with heavy indexing and simple queries
+
+## **Summary**
+For a **read-heavy analytics workload on 10M rows**, **DuckDB** provides the best balance of performance and simplicity. Its columnar architecture and vectorized execution are specifically designed for this use case, offering PostgreSQL-level analytical capabilities with SQLite-like operational simplicity. PostgreSQL remains a strong choice if you need concurrent write access or have existing infrastructure, while SQLite is ill-suited for this scale of analytical processing.

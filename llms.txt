@@ -19,8 +19,7 @@ Broadside implements the scatter/gather pattern as its core organizing principle
 
 - Ollama (default, no API key needed, free cloud tier with sign-in)
   - Default model: nemotron-3-super:cloud (runs on Ollama's cloud)
-  - Cloud models (ending in -cloud or :cloud) run in parallel automatically
-  - Local models run sequentially by default to avoid overloading hardware
+  - All models run in parallel by default; use --sequential if hardware can't handle it
 - Anthropic (optional extra, `pip install broadside[anthropic]`)
 - OpenAI-compatible (optional extra, `pip install broadside[openai]`)
 

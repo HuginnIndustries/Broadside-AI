@@ -1,0 +1,76 @@
+Here are all the issues I found in this Python function:
+
+## **CRITICAL Issues**
+
+1. **SQL Injection Vulnerability**
+   - The function directly interpolates user input into SQL queries using f-strings
+   - An attacker could inject malicious SQL code through the `filters` parameter
+   - Example: `filters = {"name": "'; DROP TABLE users; --"}`
+
+2. **Password Security Violation**
+   - Passwords are being decrypted and returned in plain text to callers
+   - This violates basic security principles - passwords should never be retrievable
+
+## **HIGH Issues**
+
+3. **Mutable Default Argument**
+   - `filters={}` creates a shared mutable object across function calls
+   - This can cause unexpected behavior where filters persist between calls
+   - Should use `filters=None` and handle inside the function
+
+4. **No Input Validation**
+   - No validation of column names in filters, allowing potential database schema exposure
+   - No type checking on filter values
+
+## **MEDIUM Issues**
+
+5. **Error Handling Missing**
+   - No exception handling for database operations that could fail
+   - No handling for decryption failures
+   - Function could crash unexpectedly
+
+6. **Performance Issues**
+   - Inefficient row-by-row processing instead of bulk operations
+   - No query optimization (indexes, LIMIT clauses)
+   - Decryption happens for all users even if not needed
+
+## **LOW Issues**
+
+7. **Code Style Problems**
+   - Inconsistent quote usage (f-strings with single quotes inside)
+   - Variable naming could be more descriptive
+   - No docstring or type hints
+
+8. **Maintainability Issues**
+   - Hardcoded table name makes function inflexible
+   - No logging for debugging purposes
+
+## **Recommended Fix**
+
+```python
+def get_users(db, filters=None):
+    """Retrieve users with optional filters (excludes passwords)."""
+    if filters is None:
+        filters = {}
+    
+    # Validate column names against whitelist
+    allowed_columns = {'name', 'email', 'status', 'created_at'}
+    invalid_columns = set(filters.keys()) - allowed_columns
+    if invalid_columns:
+        raise ValueError(f"Invalid filter columns: {invalid_columns}")
+    
+    # Build parameterized query
+    query = "SELECT id, name, email, status, created_at FROM users WHERE 1=1"
+    params = []
+    
+    for column, value in filters.items():
+        query += f" AND {column} = ?"
+        params.append(value)
+    
+    try:
+        results = db.execute(query, params)
+        return [dict(row) for row in results]
+    except Exception as e:
+        logger.error(f"Database query failed: {e}")
+        raise
+```

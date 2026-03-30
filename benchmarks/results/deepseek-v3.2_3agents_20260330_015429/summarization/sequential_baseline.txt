@@ -1,0 +1,9 @@
+For 5 engineers, **choose a monolith.**
+
+**Microservices** add crippling complexity: independent deployments, distributed debugging, and cross-service coordination will slow your tiny team to a crawl. You’ll spend more time on DevOps than features.
+
+A **monolith** keeps you fast and focused. One codebase, one deployment, one database. You can rapidly iterate, pivot, and fix bugs without navigating service boundaries. This speed is existential for an early-stage startup.
+
+Scale isn’t your problem yet; finding product-market fit is. Only consider microservices after the monolith *actively hurts*—when teams are constantly blocking each other or specific components have wildly different scaling needs. By then, you’ll have the revenue to afford the overhead.
+
+Don’t architect for a theoretical future. Build for today. Start with a well-structured monolith.

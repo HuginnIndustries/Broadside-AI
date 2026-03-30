@@ -1,0 +1,7 @@
+For a 2-5 engineer startup: **start with a monolith.** The key tradeoff is velocity versus theoretical scalability.
+
+A microservices architecture introduces immense operational complexity—distributed debugging, network latency, and inter-service deployment—that will crush a tiny team. You’ll spend your time being system administrators instead of building features for customers.
+
+A well-structured monolith gives you speed: one codebase, one deployment, and simple debugging. You can move fast, pivot quickly, and validate your product. The common fear that "we'll have to rewrite later" is overblown; a successful monolith can be incrementally decomposed *once you actually have scaling problems and the team to manage it*.
+
+Don’t architect for a hypothetical scale you may never reach. Build something that works first. You can split a successful monolith; you can’t save a failed product built on premature microservices.

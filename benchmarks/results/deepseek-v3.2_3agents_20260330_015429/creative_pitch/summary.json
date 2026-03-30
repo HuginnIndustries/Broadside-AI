@@ -1,0 +1,16 @@
+{
+  "task": "creative_pitch",
+  "n_agents": 3,
+  "backend": "ollama",
+  "model": "deepseek-v3.2",
+  "parallel_wall_ms": 16848.9,
+  "sequential_wall_ms": 28275.7,
+  "speedup": 1.68,
+  "scatter_tokens": 1039,
+  "synthesis_tokens": 1370,
+  "total_tokens": 2409,
+  "sequential_tokens": 953,
+  "token_multiplier": 7.6,
+  "scatter_only_multiplier": 3.3,
+  "diversity_score": 0.84
+}

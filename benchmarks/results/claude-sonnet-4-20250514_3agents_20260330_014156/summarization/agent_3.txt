@@ -1,0 +1,19 @@
+**Go monolith first.** For a 5-person startup, microservices are premature optimization that will kill your velocity.
+
+**Monolith advantages:**
+- **Faster development**: One codebase, one deployment, shared libraries
+- **Simpler debugging**: Stack traces don't cross network boundaries
+- **Lower operational overhead**: Single database, no service mesh complexity
+- **Team alignment**: Everyone works in the same code, natural collaboration
+
+**Microservices drawbacks for your stage:**
+- **Infrastructure tax**: You'll spend 40%+ of engineering time on DevOps instead of features
+- **Distributed system complexity**: Network failures, data consistency, monitoring nightmares
+- **Premature boundaries**: You don't know your domain well enough yet to split correctly
+- **Team overhead**: 5 engineers can't effectively own 8+ services
+
+**The reality**: Successful startups like Segment, Stripe, and Shopify started monolithic and extracted services *after* finding product-market fit and scaling their teams to 20+ engineers.
+
+**Exception**: Only consider microservices if you have strong distributed systems expertise or are building platform/integration-heavy products from day one.
+
+Build a well-structured monolith with clear module boundaries. You can always extract services later when you have the team size and operational maturity to support them.

@@ -1,0 +1,16 @@
+{
+  "task": "analytical_comparison",
+  "n_agents": 3,
+  "backend": "ollama",
+  "model": "nemotron-3-super",
+  "parallel_wall_ms": 56894.9,
+  "sequential_wall_ms": 54366.8,
+  "speedup": 0.96,
+  "scatter_tokens": 4788,
+  "synthesis_tokens": 6364,
+  "total_tokens": 11152,
+  "sequential_tokens": 4706,
+  "token_multiplier": 7.1,
+  "scatter_only_multiplier": 3.1,
+  "diversity_score": 0.764
+}

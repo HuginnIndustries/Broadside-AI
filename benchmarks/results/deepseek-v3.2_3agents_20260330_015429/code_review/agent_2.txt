@@ -1,0 +1,96 @@
+Here are the issues found in the provided Python function:
+
+## Critical
+1. **SQL Injection vulnerability** - Directly interpolating user input (`val`) into SQL string without sanitization. Attackers can inject malicious SQL through the `val` parameter.
+
+2. **Default mutable argument** - `filters={}` uses a mutable default argument. This dictionary persists across function calls, leading to unexpected behavior when filters are modified.
+
+## High
+3. **No input validation/sanitization** - No validation that `key` represents a valid column name. This could lead to SQL errors or information disclosure.
+
+4. **Insecure password handling** - Returning decrypted passwords in the response is a security risk. Passwords should not be decrypted or returned in API responses.
+
+5. **No error handling** - The function lacks try-except blocks for database operations and decryption, which could crash the application.
+
+## Medium
+6. **Potential performance issue** - Decrypting passwords in a loop for potentially many users could be slow. Password encryption/decryption is computationally expensive.
+
+7. **Memory inefficiency** - Building the entire user list in memory with `users.append()` may be inefficient for large result sets. Consider using generators or pagination.
+
+8. **Hardcoded table/column names** - The table name 'users' and column names are hardcoded, making the function less reusable.
+
+9. **Missing query optimization** - `SELECT *` is inefficient; should specify only needed columns.
+
+## Low
+10. **Style issue - Inefficient string concatenation** - Using `+=` in a loop to build the query string creates many intermediate strings. Better to use a list and `join()`.
+
+11. **Style issue - Magic string "1=1"** - Using `WHERE 1=1` as a hack to simplify query building is considered poor practice.
+
+12. **Missing type hints** - No type annotations for parameters or return value.
+
+13. **Poor function name** - `get_users` is too generic and doesn't indicate it also decrypts passwords.
+
+14. **Assumes specific database API** - Assumes `db.execute()` returns an iterable where rows can be converted to dicts, and `decrypt()` function exists in scope.
+
+## Recommendations for fixing:
+
+```python
+from typing import Optional, Dict, Any, List, Generator
+import re
+
+def get_filtered_users(
+    db, 
+    filters: Optional[Dict[str, Any]] = None,
+    columns: Optional[List[str]] = None
+) -> Generator[Dict[str, Any], None, None]:
+    """Retrieve users with optional filtering.
+    
+    Args:
+        db: Database connection object
+        filters: Dictionary of column=value filters
+        columns: List of columns to select (None for all except password)
+        
+    Yields:
+        User dictionaries without password field
+    """
+    if filters is None:
+        filters = {}
+    
+    # Validate column names to prevent SQL injection
+    valid_columns = {"id", "username", "email", "created_at"}  # Example valid columns
+    for key in filters.keys():
+        if key not in valid_columns:
+            raise ValueError(f"Invalid filter column: {key}")
+    
+    # Build safe parameterized query
+    query_parts = ["SELECT"]
+    if columns:
+        query_parts.append(", ".join(columns))
+    else:
+        # Explicitly list all columns except password
+        query_parts.append("id, username, email, created_at")
+    
+    query_parts.append("FROM users")
+    
+    params = []
+    if filters:
+        where_clauses = []
+        for key, val in filters.items():
+            where_clauses.append(f"{key} = ?")
+            params.append(val)
+        query_parts.append("WHERE " + " AND ".join(where_clauses))
+    
+    query = " ".join(query_parts)
+    
+    try:
+        results = db.execute(query, params)
+        for row in results:
+            user = dict(row)
+            # DO NOT decrypt or include password in response
+            if 'password' in user:
+                del user['password']
+            yield user
+    except Exception as e:
+        # Log the error appropriately
+        raise DatabaseError(f"Failed to fetch users: {str(e)}")
+```

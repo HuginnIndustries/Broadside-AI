@@ -1,0 +1,20 @@
+**Go with a monolith.** Here's why:
+
+**Monolith advantages for your situation:**
+- **Speed to market**: Deploy features faster without coordinating multiple services
+- **Team efficiency**: 5 engineers can't effectively maintain multiple services—you'll waste time on inter-service communication and deployment complexity
+- **Simpler operations**: One codebase, one deployment, one thing to monitor and debug
+- **Cost-effective**: Single database, simpler infrastructure, lower operational overhead
+- **Easier pivoting**: B2B SaaS requirements change rapidly; refactoring across services is painful
+
+**Microservices drawbacks for startups:**
+- **Premature optimization**: You're solving scalability problems you don't have yet
+- **Operational burden**: Service discovery, distributed tracing, circuit breakers—complexity that slows feature development
+- **Team overhead**: Each service needs ownership, documentation, and maintenance
+
+**When to reconsider microservices:**
+- You have 20+ engineers
+- Clear service boundaries emerge naturally
+- Specific scaling bottlenecks that can't be solved within the monolith
+
+**Bottom line**: Microservices are a solution to organizational and scaling problems. You have neither yet. Build a well-structured monolith, focus on customer value, and extract services later when team size and complexity actually justify the tradeoffs.

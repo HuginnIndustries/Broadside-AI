@@ -1,0 +1,5 @@
+{
+  "label": "technical_support",
+  "confidence": 0.95,
+  "reasoning": "The user is reporting a persistent technical malfunction — the CSV export function hangs at 99% after three days of attempts — which prevents them from completing a critical task (preparing for a board meeting). This is not a billing dispute, not a request for new features, not positive feedback, and not spam. The urgency and specificity of the technical failure align clearly with a technical support issue requiring troubleshooting or bug resolution."
+}

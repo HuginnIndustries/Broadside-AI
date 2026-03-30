@@ -1,0 +1,16 @@
+{
+  "task": "summarization",
+  "n_agents": 3,
+  "backend": "ollama",
+  "model": "nemotron-3-super",
+  "parallel_wall_ms": 10337.2,
+  "sequential_wall_ms": 11913.2,
+  "speedup": 1.15,
+  "scatter_tokens": 1219,
+  "synthesis_tokens": 2343,
+  "total_tokens": 3562,
+  "sequential_tokens": 1207,
+  "token_multiplier": 8.9,
+  "scatter_only_multiplier": 3.0,
+  "diversity_score": 0.801
+}

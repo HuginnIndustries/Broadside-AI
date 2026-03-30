@@ -1,0 +1,16 @@
+{
+  "task": "code_review",
+  "n_agents": 3,
+  "backend": "anthropic",
+  "model": "claude-sonnet-4-20250514",
+  "parallel_wall_ms": 17289.0,
+  "sequential_wall_ms": 50802.0,
+  "speedup": 2.94,
+  "scatter_tokens": 2967,
+  "synthesis_tokens": 3440,
+  "total_tokens": 6407,
+  "sequential_tokens": 3529,
+  "token_multiplier": 5.4,
+  "scatter_only_multiplier": 2.5,
+  "diversity_score": 0.651
+}

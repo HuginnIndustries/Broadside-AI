@@ -1,0 +1,16 @@
+{
+  "task": "analytical_comparison",
+  "n_agents": 3,
+  "backend": "anthropic",
+  "model": "claude-sonnet-4-20250514",
+  "parallel_wall_ms": 35275.1,
+  "sequential_wall_ms": 78768.6,
+  "speedup": 2.23,
+  "scatter_tokens": 4819,
+  "synthesis_tokens": 5653,
+  "total_tokens": 10472,
+  "sequential_tokens": 4612,
+  "token_multiplier": 6.8,
+  "scatter_only_multiplier": 3.1,
+  "diversity_score": 0.734
+}

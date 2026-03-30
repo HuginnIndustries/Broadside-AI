@@ -1,0 +1,16 @@
+{
+  "task": "summarization",
+  "n_agents": 3,
+  "backend": "anthropic",
+  "model": "claude-sonnet-4-20250514",
+  "parallel_wall_ms": 10734.2,
+  "sequential_wall_ms": 27852.4,
+  "speedup": 2.59,
+  "scatter_tokens": 1072,
+  "synthesis_tokens": 1504,
+  "total_tokens": 2576,
+  "sequential_tokens": 1066,
+  "token_multiplier": 7.2,
+  "scatter_only_multiplier": 3.0,
+  "diversity_score": 0.735
+}

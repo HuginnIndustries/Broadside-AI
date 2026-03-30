@@ -1,0 +1,16 @@
+{
+  "task": "creative_pitch",
+  "n_agents": 3,
+  "backend": "ollama",
+  "model": "nemotron-3-super",
+  "parallel_wall_ms": 6266.1,
+  "sequential_wall_ms": 30078.4,
+  "speedup": 4.8,
+  "scatter_tokens": 694,
+  "synthesis_tokens": 1737,
+  "total_tokens": 2431,
+  "sequential_tokens": 722,
+  "token_multiplier": 10.1,
+  "scatter_only_multiplier": 2.9,
+  "diversity_score": 0.827
+}

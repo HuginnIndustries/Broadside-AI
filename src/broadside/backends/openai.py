@@ -34,11 +34,20 @@ class OpenAIBackend(Backend):
         max_tokens: int = 4096,
         **kwargs: Any,
     ) -> None:
+        import os
+
+        resolved_key = api_key or os.environ.get("OPENAI_API_KEY")
+        if not resolved_key:
+            raise RuntimeError(
+                "OpenAI API key not found. Set it with:\n"
+                "  Windows CMD:    set OPENAI_API_KEY=sk-...\n"
+                "  PowerShell:     $env:OPENAI_API_KEY=\"sk-...\"\n"
+                "  macOS/Linux:    export OPENAI_API_KEY=sk-..."
+            )
+
         self.model = model
         self.max_tokens = max_tokens
-        client_kwargs: dict[str, Any] = {}
-        if api_key:
-            client_kwargs["api_key"] = api_key
+        client_kwargs: dict[str, Any] = {"api_key": resolved_key}
         if base_url:
             client_kwargs["base_url"] = base_url
         self._client = openai.AsyncOpenAI(**client_kwargs)
