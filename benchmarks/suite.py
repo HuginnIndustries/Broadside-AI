@@ -1,6 +1,6 @@
 """Standard benchmark suite — run with `python benchmarks/suite.py`.
 
-Requires Ollama running locally with llama3.2 pulled.
+Requires Ollama signed in for cloud access (default: nemotron-3-super:cloud), or a local model pulled.
 Results are written to benchmarks/results/.
 
 Task types chosen to cover the scatter/gather sweet spot:
@@ -92,7 +92,7 @@ TASKS = [
 async def main() -> None:
     print("Running Broadside benchmark suite...")
     print(f"Tasks: {len(TASKS)}")
-    print(f"Backend: ollama (llama3.2)")
+    print(f"Backend: ollama (nemotron-3-super:cloud)")
     print(f"Agents per scatter: 3")
     print()
 

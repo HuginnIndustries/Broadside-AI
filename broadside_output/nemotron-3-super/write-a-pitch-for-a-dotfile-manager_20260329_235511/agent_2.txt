@@ -1,0 +1,77 @@
+**Pitch: "Dotly" — Your Dotfiles, Automatically Synced, Secure, and Effortless**
+
+Tired of manually copying `.bashrc`, `.vimrc`, `.gitconfig`, or your favorite `neovim` setup between machines? Worried about losing your custom environment after a system wipe? Sick of wrestling with symbolic links, git repos you forgot to update, or shell scripts that break on macOS vs. Linux?
+
+Meet **Dotly** — the dotfile manager designed for developers who value their workflow, hate repetition, and want their environment to follow them everywhere… *without the friction*.
+
+---
+
+### 🚀 What Dotly Does (Simply)
+
+**Dotly** is a lightweight, zero-configuration (but deeply customizable) tool that:
+- ✅ **Discovers** your dotfiles automatically (or lets you tag them with `.dotly` markers)
+- ✅ **Syncs** them securely to a private, encrypted Git repository (GitHub, GitLab, self-hosted — your choice)
+- ✅ **Deploys** them to any new machine with a single command: `dotly sync`
+- ✅ **Rolls back** changes safely with version history — no more “I broke my shell!” panic
+- ✅ **Adapts** per-OS/profile: automatically applies Linux-specific tweaks on Ubuntu, macOS fixes on Apple Silicon, or work vs. personal profiles via env vars
+- ✅ **Integrates** with your shell: adds `dotly` commands to your `PATH`, prompts you to review changes before deploying, and logs everything
+- ✅ **Open source & auditable**: No telemetry. No black boxes. Just Bash/Python/Zsh under the hood — you own it.
+
+---
+
+### 💡 Why Developers Love It
+
+> _“I used to spend 20 minutes setting up a new laptop. Now I run `dotly sync` and get coffee while it works.”_  
+> — Senior SRE, FAANG
+
+> _“I finally stopped dreading OS reinstalls. Dotly turned my dotfiles from a liability into my superpower.”_  
+> — Indie Hacker & Open Source Maintainer
+
+Dotly doesn’t just manage files — it **preserves your cognitive environment**. Your aliases, your keybindings, your preferred editor theme, your SSH config, your `tmux` layouts — all of it, versioned, portable, and ready when you are.
+
+---
+
+### 🔐 Security & Privacy First
+
+- Your dotfiles stay **yours**: encrypted at rest in your own Git repo (we never touch them)
+- Optional **GPG signing** for commit integrity
+- No cloud storage. No third-party servers. You control the repo.
+- Audit trail: every change is logged, diffed, and reversible.
+
+---
+
+### 🛠️ How It Works (In 30 Seconds)
+
+1. `dotly init` → scans your `$HOME`, suggests dotfiles to track (you confirm)
+2. `dotly add .vimrc .gitconfig` → tags files for management
+3. `dotly push` → encrypts, commits, pushes to your remote repo
+4. On any new machine: `dotly clone <your-repo> && dotly sync` → done.
+
+Want to exclude a file? Add it to `.dotlyignore`.  
+Need a profile for work? `dotly profile work` → loads a different set.
+
+---
+
+### 🌟 The Vision
+
+Dotly isn’t just another dotfile manager — it’s the **missing layer of personal infrastructure** for the modern developer.  
+We believe your environment should be as portable, reliable, and version-controlled as your code.
+
+No more guesswork. No more lost configs.  
+Just **you**, your tools, and a seamless transition — wherever you go.
+
+---
+
+### 📦 Get Started Today
+
+👉 [github.com/dotly/dotly](https://github.com/dotly/dotly)  
+📦 Install: `curl -sSf https://dotly.sh/install | sh`  
+📖 Docs: [dotly.sh](https://dotly.sh)  
+💬 Community: Discord | Reddit | Twitter/X
+
+**Your dotfiles deserve better than a tangled mess of symlinks and hope.  
+Give them Dotly.**
+
+--- 
+
+*Dotly: Manage your environment. Not your headaches.*

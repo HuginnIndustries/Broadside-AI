@@ -9,45 +9,49 @@ a phase can land in any order.
 
 Goal: `pip install broadside && python quickstart.py` works on first try, no API keys.
 
-- [ ] Package structure (`pyproject.toml`, src layout, extras for backends)
-- [ ] Core primitives: `Task`, `ScatterConfig`, `gather()`, `synthesize()`
-- [ ] Ollama backend (base install, no API key required)
-- [ ] Anthropic backend (`pip install broadside[anthropic]`)
-- [ ] OpenAI-compatible backend (`pip install broadside[openai]`)
-- [ ] CLI entrypoint (`broadside run`)
-- [ ] Budget circuit breaker (per-scatter cost limit + global kill switch)
-- [ ] Quick start example (copy-pasteable, under 15 lines, runs against Ollama)
+- [x] Package structure (`pyproject.toml`, src layout, extras for backends)
+- [x] Core primitives: `Task`, `ScatterConfig`, `gather()`, `synthesize()`
+- [x] Ollama backend (base install, no API key required)
+- [x] Anthropic backend (`pip install broadside[anthropic]`)
+- [x] OpenAI-compatible backend (`pip install broadside[openai]`)
+- [x] CLI entrypoint (`broadside run` + `python -m broadside` for Windows)
+- [x] Budget circuit breaker (per-scatter cost limit + global kill switch)
+- [x] Quick start example (copy-pasteable, under 15 lines, runs against Ollama)
 - [ ] CI pipeline that runs quick start as a test
-- [ ] README (follows research structure: tagline → problem → quick start → architecture)
-- [ ] `llms.txt` for AI-friendly project description
+- [x] README (follows research structure: tagline → problem → quick start → architecture)
+- [x] `llms.txt` for AI-friendly project description
+- [x] Nested output directory structure (`broadside_output/model/topic_timestamp/`)
+- [x] Sequential/parallel auto-detection (local Ollama sequential, cloud parallel)
+- [x] Cloud model support (`:cloud` tag detection for Ollama cloud models)
+- [ ] Model listing / discovery for Anthropic and OpenAI (their catalogs change with releases)
 
 ## Phase 1 — Credibility (first two weeks post-launch)
 
 Goal: real numbers that back up the README's claims.
 
-- [ ] Benchmark harness (latency, token cost, output diversity)
-- [ ] Benchmark suite: 3–5 task types (creative, analytical, classification, summarization, code review)
+- [x] Benchmark harness (latency, token cost, output diversity)
+- [x] Benchmark suite: 3–5 task types (creative, analytical, classification, summarization, code review)
 - [ ] Broadside vs. sequential baseline on same tasks
 - [ ] Broadside vs. LangGraph fan-out on same tasks (if feasible without misrepresenting)
 - [ ] Published benchmark results in `benchmarks/` with reproduction instructions
-- [ ] Synthesis strategies beyond basic LLM aggregation:
-  - [ ] Consensus (best for knowledge tasks — ACL 2025 Kaesberg et al.)
-  - [ ] Voting (best for reasoning tasks)
+- [x] Synthesis strategies beyond basic LLM aggregation:
+  - [x] Consensus (best for knowledge tasks — ACL 2025 Kaesberg et al.)
+  - [x] Voting (best for reasoning tasks)
   - [ ] Weighted merge (scored recommendations)
 - [ ] Structured output schemas for synthesis (make merging tractable)
-- [ ] Conflict detection between scatter outputs
+- [x] Conflict detection between scatter outputs
 - [ ] Early termination with quality signals (kill branches that aren't adding value)
 
 ## Phase 2 — Community (first month)
 
 Goal: a contributor can go from clone to merged PR in under an hour.
 
-- [ ] `CONTRIBUTING.md` with dev setup, `make test`, PR workflow
-- [ ] Task library (`tasks/` directory, YAML schema, no core code knowledge needed)
-- [ ] 5–10 seed task definitions covering different scatter patterns
+- [x] `CONTRIBUTING.md` with dev setup, `make test`, PR workflow
+- [x] Task library (`tasks/` directory, YAML schema, no core code knowledge needed)
+- [x] 5 seed task definitions covering different scatter patterns
 - [ ] "Good first issue" labels: new synthesis strategy, new task template, new backend
-- [ ] `ARCHITECTURE.md` or ADR explaining why features are out of scope
-- [ ] Design philosophy doc (why no inter-agent communication, why no DAG scheduler)
+- [x] `ARCHITECTURE.md` explaining why features are out of scope
+- [x] Design philosophy doc (why no inter-agent communication, why no DAG scheduler)
 
 ## Phase 3 — Documentation (first month, parallel with Phase 2)
 
@@ -113,4 +117,4 @@ when evaluating feature requests or PRs.
 
 ---
 
-*Last updated: 2026-03-29*
+*Last updated: 2026-03-30*

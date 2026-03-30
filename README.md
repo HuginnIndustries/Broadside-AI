@@ -12,27 +12,47 @@ pip install broadside
 
 ## Quick Start
 
-Requires [Ollama](https://ollama.ai) running locally (`ollama pull llama3.2 && ollama serve`):
+Install [Ollama](https://ollama.ai), sign in for free cloud access, and run:
+
+```bash
+pip install broadside
+python -m broadside run --prompt "Write a pitch for a dotfile manager" --n 3
+```
+
+The `--n 3` means "scatter to 3 parallel agents." Research shows 3–5 is the sweet spot — beyond that, output quality plateaus while costs scale linearly (DeepMind 2025).
+
+The default model is `nemotron-3-super:cloud`, which runs on Ollama's cloud (free tier, no GPU needed). To use a different cloud model:
+
+```bash
+python -m broadside run --prompt "Write a pitch for a dotfile manager" --n 3 --model gpt-oss:120b-cloud
+```
+
+**Have a GPU?** Pull a local model and skip the cloud entirely. Local models run sequentially by default to avoid choking your machine:
+
+```bash
+ollama pull gemma3:1b
+python -m broadside run --prompt "Write a pitch for a dotfile manager" --n 3 --model gemma3:1b
+```
+
+### Python API
 
 ```python
-import asyncio
-from broadside import Task, run
+from broadside import Task, run_sync
 
 task = Task(
     prompt="Write a one-paragraph pitch for a CLI tool that helps developers manage dotfiles.",
 )
 
-result = asyncio.run(run(task, n=3, backend="ollama"))
-
-print(f"Synthesized from {result.gather.n_completed} agents "
-      f"({result.total_tokens():,} tokens, {result.gather.wall_clock_ms:.0f}ms):\n")
+result = run_sync(task, n=3, backend="ollama")
 print(result.result)
 ```
 
-Or from the CLI:
+For async code, use `run()` directly:
 
-```bash
-broadside run --prompt "Write a pitch for a dotfile manager" --n 3
+```python
+from broadside import Task, run
+
+result = await run(task, n=3, backend="ollama")
 ```
 
 ## How It Works
@@ -43,13 +63,125 @@ Task → Scatter (N parallel agents) → Gather → Synthesize → Human checkpo
 
 Each agent runs independently — no shared state, no waiting on other agents. The synthesis step identifies consensus, flags outliers, and produces a single actionable output. The gather step is the natural point for human review.
 
+Results are saved to `broadside_output/` organized by model and topic for easy comparison across runs.
+
+## Synthesis Strategies
+
+Broadside ships with three strategies for collapsing N outputs into one:
+
+| Strategy | Best for | How it works |
+|----------|----------|-------------|
+| `llm` (default) | General tasks | Sends all outputs to a model that identifies consensus, flags outliers, and writes a unified answer |
+| `consensus` | Knowledge tasks | Extracts agreed-upon claims, disagreements, and unique insights |
+| `voting` | Reasoning tasks | Each output votes on an answer; majority wins |
+
+Note: the default `llm` strategy calls the model one additional time for synthesis. In practice, synthesis can use as many tokens as the scatter itself. For cost-sensitive workloads, `consensus` or `voting` are lighter alternatives.
+
+```bash
+python -m broadside run --prompt "Your task" --n 3 --synthesis voting
+```
+
 ## Backends
 
-| Backend | Install | API Key Required |
-|---------|---------|-----------------|
-| Ollama | `pip install broadside` | No |
-| Anthropic | `pip install broadside[anthropic]` | Yes |
-| OpenAI | `pip install broadside[openai]` | Yes |
+### Ollama (default — no API key)
+
+Ollama is the default backend and ships with the base install. Sign in to the [Ollama](https://ollama.ai) app for free cloud access — no GPU required.
+
+```bash
+python -m broadside run --prompt "Your task" --n 3
+```
+
+Cloud models run in parallel automatically. Local models run sequentially to avoid overloading your hardware. Override with `--parallel` or `--sequential`.
+
+Available cloud models:
+
+```
+nemotron-3-super:cloud          (default)
+mistral-large-3:675b-cloud
+deepseek-v3.2:cloud
+qwen3.5:cloud
+qwen3.5:397b-cloud
+qwen3-coder-next:cloud
+kimi-k2.5:cloud
+gpt-oss:120b-cloud
+gpt-oss:20b-cloud
+minimax-m2.7:cloud
+cogito-2.1:671b-cloud
+gemini-3-flash-preview:cloud
+```
+
+Full list: `ollama list --cloud`
+
+Have a GPU? Pull a local model instead:
+
+```bash
+ollama pull gemma3:1b
+python -m broadside run --prompt "Your task" --n 3 --model gemma3:1b
+```
+
+### Anthropic
+
+Uses the Anthropic Messages API. Default model: `claude-sonnet-4-20250514`.
+
+```bash
+pip install broadside[anthropic]
+```
+
+Set your API key:
+
+```bash
+# Windows (Command Prompt)
+set ANTHROPIC_API_KEY=your-key-here
+
+# Windows (PowerShell)
+$env:ANTHROPIC_API_KEY="your-key-here"
+
+# macOS / Linux
+export ANTHROPIC_API_KEY=your-key-here
+```
+
+```bash
+python -m broadside run --prompt "Your task" --n 3 --backend anthropic
+```
+
+Or specify a model:
+
+```bash
+python -m broadside run --prompt "Your task" --n 3 --backend anthropic --model claude-sonnet-4-20250514
+```
+
+### OpenAI (and compatible APIs)
+
+Works with OpenAI, Azure OpenAI, and any API that implements the OpenAI chat completions interface (vLLM, Together, Groq, etc.). Default model: `gpt-4o-mini`.
+
+```bash
+pip install broadside[openai]
+```
+
+Set your API key:
+
+```bash
+# Windows (Command Prompt)
+set OPENAI_API_KEY=your-key-here
+
+# Windows (PowerShell)
+$env:OPENAI_API_KEY="your-key-here"
+
+# macOS / Linux
+export OPENAI_API_KEY=your-key-here
+```
+
+```bash
+python -m broadside run --prompt "Your task" --n 3 --backend openai
+```
+
+For OpenAI-compatible providers, pass `--model` and set `OPENAI_BASE_URL` the same way to point at your provider.
+
+### All backends at once
+
+```bash
+pip install broadside[all]
+```
 
 ## When To Use Broadside
 

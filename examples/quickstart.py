@@ -1,20 +1,26 @@
 """Broadside quick start — runs against Ollama, no API keys needed.
 
-Prerequisites:
-    pip install broadside
-    ollama pull llama3.2
-    ollama serve  (if not already running)
+Before running:
+    1. Install Broadside:  pip install broadside
+    2. Install Ollama:     https://ollama.ai
+    3. Sign in to the Ollama app (free cloud access)
+
+Default model is nemotron-3-super:cloud (runs on Ollama's cloud, no GPU needed).
+Have a GPU? Use a local model instead:
+    result = run_sync(task, n=3, backend="ollama", backend_kwargs={"model": "gemma3:1b"})
+
+Run with:
+    python examples/quickstart.py
 """
 
-import asyncio
-from broadside import Task, run
+from broadside import Task, run_sync
 
+# Define what you want — be specific about the output
 task = Task(
     prompt="Write a one-paragraph pitch for a CLI tool that helps developers manage dotfiles.",
 )
 
-result = asyncio.run(run(task, n=3, backend="ollama"))
+# Scatter to 3 agents, gather results, synthesize into one answer
+result = run_sync(task, n=3, backend="ollama")
 
-print(f"Synthesized from {result.gather.n_completed} agents "
-      f"({result.total_tokens():,} tokens, {result.gather.wall_clock_ms:.0f}ms):\n")
 print(result.result)

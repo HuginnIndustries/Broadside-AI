@@ -1,0 +1,78 @@
+**Introducing DotSync – the smartest, safest way to own, share, and evolve your dotfiles.**
+
+---
+
+### 🎯 The problem every developer knows too well  
+
+* **Chaotic configs** – Jumping between laptops, VMs, or fresh OS installs means copying and pasting a mish‑mash of `.bashrc`, `.vimrc`, `.gitconfig`, etc.  
+* **Version‑control pain** – Stashing your dotfiles in a plain‑Git repo forces you to juggle secrets, OS‑specific tweaks, and merge conflicts manually.  
+* **No roll‑back safety** – A bad tweak can break your entire environment, and recovering is a nightmare.  
+* **Cross‑platform madness** – Linux, macOS, and WSL each need slightly different settings, yet most tools treat them the same.
+
+---
+
+### 🚀 The DotSync solution  
+
+| Feature | Why it matters | How DotSync delivers it |
+|---------|----------------|------------------------|
+| **Zero‑friction onboarding** | “Just drop my repo in and I’m ready” | One‑line `dotsync init <repo-url>` – detects OS, creates a secure local cache, and links every file automatically. |
+| **Smart templating & conditionals** | One source can generate Linux, macOS, and WSL configs without duplication | Jinja‑style templates (`{{ if is_mac }}`) + built‑in OS detection, so a single `~/.config` folder becomes three perfectly‑tuned environments. |
+| **Secret‑aware encryption** | API keys, passwords, and tokens must never leak | AES‑256 vault stored in your Git repo (or any remote) that is unlocked once per session via your SSH key or a hardware token. |
+| **Atomic roll‑backs & snapshots** | “Undo that change” should be as easy as `Ctrl‑Z` | Every `dotsync apply` creates a signed snapshot. `dotsync rollback <snapshot-id>` restores the entire environment instantly. |
+| **Unified CLI + GUI** | Power users love the terminal; newcomers love a visual guide | Minimalist terminal UI for scripting (`dotsync apply`, `dotsync diff`) **and** a cross‑platform Electron dashboard that visualizes file trees, diffs, and secret vaults. |
+| **Plug‑in ecosystem** | Teams need custom workflows (e.g., auto‑install Homebrew packages) | Write a plug‑in in JavaScript or Python; publish to the DotSync Marketplace. Already‑built plug‑ins: `brew-sync`, `npm‑link`, `kube‑config‑manager`. |
+| **First‑class Git integration** | You already use Git – don’t reinvent the wheel | DotSync is a thin Git wrapper that adds pre‑commit linting, conflict‑resolution helpers, and automatic re‑encryption of secrets on push. |
+| **Collaborative profiles** | On‑call rotations, pair‑programming, or shared dev boxes | Create “team profiles” that merge individual overrides into a shared baseline, with per‑member audit logs. |
+| **Portable & self‑hosted** | Companies with strict compliance need control | Run the optional DotSync Server on‑prem to host vaults, audit logs, and interface with LDAP / SSO. No SaaS lock‑in. |
+
+---
+
+### 📈 What you’ll gain  
+
+* **Instantly reproducible environments** – Clone a repo, run one command, and you’re on the exact same setup as your teammates (down to colors, aliases, and secrets).  
+* **Zero downtime after a bad change** – Snapshots let you revert in < 2 seconds, not hours of digging through backups.  
+* **Security by default** – Secrets never hit your filesystem unencrypted; they’re auto‑locked after use.  
+* **Reduced onboarding time** – New hires go from “install Ubuntu → copy `.bashrc`” to “run `dotsync init` and start coding”.  
+* **Unified tooling** – One CLI, one UI, one workflow for every OS you touch.
+
+---
+
+### 🛠️ Use‑case snapshot  
+
+> **“I just got a new MacBook, a Linux workstation, and a fresh WSL2 distro. My team uses a single dotfile repo with encrypted API keys. With DotSync I run:**  
+
+```bash
+dotsync init git@github.com:myorg/dotfiles.git   # clones & sets up vault
+dotsync apply                                     # links files, installs OS‑specific packages
+```
+
+> **Everything works out‑of‑the‑box. I open a terminal, my prompt looks the same, `git config --global user.email` is already set, and the secret API token is available only to the process that needs it. Later I edit my `.zshrc`, run `dotsync commit -m "Add new alias"`, and my changes instantly propagate to every machine – with a one‑click rollback ready if something breaks.**  
+
+---
+
+### 🎉 Testimonials  
+
+| Name | Title | Quote |
+|------|-------|-------|
+| **Lena M.** | Senior DevOps Engineer | “DotSync cut my environment‑drift time from weeks to minutes. The roll‑back feature saved a production incident last month.” |
+| **Ravi K.** | Front‑end Lead | “I love the visual dashboard – I can see exactly which files differ between my laptop and CI container, and fix them in one click.” |
+| **Team Kubernetes** | Platform Squad | “Our shared cluster configs live in a DotSync profile, and the secret vault handles kube‑config tokens without ever committing them.” |
+
+---
+
+### 📦 Get started in 30 seconds  
+
+1️⃣ **Install** – `curl -fsSL https://dotsync.dev/install.sh | sh` (Linux/macOS/WSL)  
+2️⃣ **Create a repo** – `dotsync new my‑dotfiles` (or fork our starter template)  
+3️⃣ **Deploy** – `dotsync init <repo>` → your environment is ready.  
+
+> **Free tier:** up to 10 machines, 5 GB vault, unlimited public repos.  
+> **Pro tier:** self‑hosted server, SSO, audit logs, priority plug‑ins – **$9/month per user**.
+
+---
+
+### 📞 Ready to simplify your config chaos?  
+
+Visit **[dotsync.dev](https://dotsync.dev)**, start a 14‑day free trial, or book a live demo with our engineering team.  
+
+**DotSync – Your dotfiles, mastered.**

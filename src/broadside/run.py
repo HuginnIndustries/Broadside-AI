@@ -26,6 +26,7 @@ async def run(
     synthesis_backend: str | None = None,
     synthesis_model: str | None = None,
     max_tokens: int | None = None,
+    parallel: bool | None = None,
 ) -> Synthesis:
     """Run a full scatter/gather/synthesize cycle.
 
@@ -42,6 +43,8 @@ async def run(
         synthesis_backend: Backend for synthesis (defaults to same as scatter).
         synthesis_model: Model override for synthesis step.
         max_tokens: Per-scatter token budget. None = unbounded.
+        parallel: Run branches concurrently. Defaults to True for cloud
+                  backends, False for local (Ollama) to avoid overloading.
 
     Returns:
         Synthesis with the final result, raw outputs, and cost data.
@@ -57,6 +60,7 @@ async def run(
         backend_kwargs=backend_kwargs,
         agent_kwargs=agent_kwargs,
         budget=budget,
+        parallel=parallel,
     )
     wall_ms = (time.perf_counter() - t0) * 1000
 
@@ -73,4 +77,39 @@ async def run(
         backend=syn_backend,
         backend_kwargs=syn_bk,
         model=synthesis_model,
+    )
+
+
+def run_sync(
+    task: Task,
+    n: int = 3,
+    backend: str = "ollama",
+    backend_kwargs: dict[str, Any] | None = None,
+    agent_kwargs: dict[str, Any] | None = None,
+    synthesis_strategy: str = "llm",
+    synthesis_backend: str | None = None,
+    synthesis_model: str | None = None,
+    max_tokens: int | None = None,
+    parallel: bool | None = None,
+) -> Synthesis:
+    """Synchronous version of run() — no asyncio knowledge needed.
+
+    Same arguments as run(). Use this in scripts, notebooks, and anywhere
+    you don't want to think about async/await.
+    """
+    import asyncio
+
+    return asyncio.run(
+        run(
+            task=task,
+            n=n,
+            backend=backend,
+            backend_kwargs=backend_kwargs,
+            agent_kwargs=agent_kwargs,
+            synthesis_strategy=synthesis_strategy,
+            synthesis_backend=synthesis_backend,
+            synthesis_model=synthesis_model,
+            max_tokens=max_tokens,
+            parallel=parallel,
+        )
     )

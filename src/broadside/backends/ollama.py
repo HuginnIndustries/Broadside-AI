@@ -14,8 +14,9 @@ import httpx
 from broadside.backends import register
 from broadside.backends.base import AgentResult, Backend
 
-# Sensible default — small, fast, available on most Ollama installs
-_DEFAULT_MODEL = "llama3.2"
+# Cloud by default — works without a GPU, free tier on Ollama.
+# Users with local hardware can override to a local model (e.g. gemma3:1b).
+_DEFAULT_MODEL = "nemotron-3-super:cloud"
 _DEFAULT_BASE_URL = "http://localhost:11434"
 
 
@@ -45,13 +46,38 @@ class OllamaBackend(Backend):
         if kwargs:
             payload["options"] = kwargs
 
-        async with httpx.AsyncClient(timeout=self.timeout) as client:
-            resp = await client.post(
-                f"{self.base_url}/api/generate",
-                json=payload,
-            )
-            resp.raise_for_status()
-            data = resp.json()
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                resp = await client.post(
+                    f"{self.base_url}/api/generate",
+                    json=payload,
+                )
+                resp.raise_for_status()
+                data = resp.json()
+        except httpx.ConnectError:
+            raise ConnectionError(
+                f"Can't connect to Ollama at {self.base_url}.\n\n"
+                f"Make sure Ollama is installed and running:\n"
+                f"  1. Install: https://ollama.ai\n"
+                f"  2. Pull a model: ollama pull {self.model}\n"
+                f"  3. Start the server: ollama serve\n\n"
+                f"Or sign in to the Ollama app for free cloud access.\n"
+                f"  The default model (nemotron-3-super:cloud) runs in the cloud.\n"
+                f"  See all cloud models: ollama list --cloud\n"
+            ) from None
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 404:
+                model_name = payload["model"]
+                hint = f"Pull it first: ollama pull {model_name}"
+                if not (model_name.endswith("-cloud") or ":cloud" in model_name):
+                    hint += (
+                        f"\n\nOr try the cloud version (no download, free tier):"
+                        f"\n  ollama run {model_name.split(':')[0]}:cloud"
+                    )
+                raise RuntimeError(
+                    f"Model '{model_name}' not found in Ollama.\n{hint}"
+                ) from None
+            raise
 
         latency = (time.perf_counter() - t0) * 1000
 

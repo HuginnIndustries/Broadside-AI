@@ -1,0 +1,33 @@
+**Pitch: Broadside — Parallel LLM Agent Orchestration Without the Overhead**
+
+Tired of hierarchical LLM agent frameworks collapsing under their own complexity?  
+You’re not alone.
+
+Studies show that traditional hierarchical agent systems fail **41–86.7% of the time**, with **coordination breakdowns** — miscommunication, deadlocks, inconsistent state, and messy org-chart logic — accounting for a staggering **36.9% of all failures**. The problem isn’t the agents. It’s the *structure* forcing them to talk, wait, negotiate, and synchronize like corporate middle managers.
+
+Enter **Broadside**.
+
+Broadside is a radical rethink: **scatter your task to N parallel LLM agents, gather their outputs, synthesize the best answer — no hierarchy, no messaging, no coordination overhead.**
+
+Think of it like a jury of experts, each working in isolation on the same prompt — then a final synthesizer (you, or a lightweight judge LLM) picks the most coherent, accurate, or creative result. No chains of command. No waiting for approvals. No cascading failures when one agent gets stuck.
+
+**Why it works:**
+- ✅ **Zero coordination latency** — agents run in true parallel (async or multiprocess)
+- ✅ **Fault tolerance by design** — if 3 out of 5 agents fail, you still have 2 good answers to synthesize from
+- ✅ **Scales linearly** — add more agents, get more diverse perspectives, not more bureaucracy
+- ✅ **Simple API** — `broadside.scatter(task, n=5).gather(synthesizer=vote_or_llm_judge)`
+- ✅ **Framework-agnostic** — works with any LLM backend (OpenAI, Anthropic, local HF models, etc.)
+
+Whether you’re building complex reasoning chains, creative brainstorming pipelines, robust fact-checking systems, or adversarial red-teaming — Broadside gives you the reliability of ensemble methods without the fragility of agent hierarchies.
+
+**Stop managing agents. Start getting answers.**
+
+Broadside: Parallelism as a feature, not a bug.  
+*Scatter. Gather. Win.*
+
+Learn more at: [github.com/yourorg/broadside](https://github.com/yourorg/broadside)  
+*Built for engineers who ship — not for org charts that stall.*
+
+---
+
+**Broadside — Because the best ideas don’t need a chain of command. They need a crowd.**
