@@ -12,11 +12,8 @@ from typing import Any
 import click
 import yaml
 from rich.console import Console
-from rich.live import Live
 from rich.panel import Panel
 from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
-from rich.table import Table
-from rich.text import Text
 
 from broadside_ai.budget import ScatterBudget
 from broadside_ai.gather import gather
@@ -32,6 +29,7 @@ def _truncate_prompt(prompt: str, max_len: int = 60) -> str:
     if len(prompt) <= max_len:
         return prompt
     return prompt[: max_len - 1].rstrip() + "\u2026"
+
 
 # Default output directory — created alongside the user's working directory
 _OUTPUT_DIR = Path("broadside_ai_output")
@@ -58,7 +56,8 @@ def main() -> None:
     help="Force parallel or sequential execution. Default: parallel.",
 )
 @click.option(
-    "--output", "-o",
+    "--output",
+    "-o",
     type=click.Path(),
     default=None,
     help="Output directory. Default: broadside_ai_output/",
@@ -104,8 +103,17 @@ def run(
     try:
         asyncio.run(
             _run_pipeline(
-                task, n, backend, bk, synthesis, budget, parallel,
-                output_dir, save, raw, json_out,
+                task,
+                n,
+                backend,
+                bk,
+                synthesis,
+                budget,
+                parallel,
+                output_dir,
+                save,
+                raw,
+                json_out,
             )
         )
     except RuntimeError as exc:
@@ -137,6 +145,7 @@ async def _run_pipeline(
     if not model_display:
         if backend == "ollama":
             from broadside_ai.backends.ollama import _DEFAULT_MODEL
+
             model_display = f"{_DEFAULT_MODEL} (default)"
         elif backend == "anthropic":
             model_display = "claude-sonnet-4-20250514 (default)"
@@ -148,23 +157,33 @@ async def _run_pipeline(
     # JSON mode skips all the rich display
     if json_out:
         return await _run_pipeline_quiet(
-            task, n, backend, backend_kwargs, strategy, budget,
-            run_parallel, output_dir, save, raw,
+            task,
+            n,
+            backend,
+            backend_kwargs,
+            strategy,
+            budget,
+            run_parallel,
+            output_dir,
+            save,
+            raw,
         )
 
     # --- Header panel ---
     console.print()
-    console.print(Panel(
-        f"[bold]Prompt:[/bold]  {_truncate_prompt(task.prompt)}\n"
-        f"[bold]Model:[/bold]   {model_display}\n"
-        f"[bold]Backend:[/bold] {backend}\n"
-        f"[bold]Agents:[/bold]  {n}\n"
-        f"[bold]Mode:[/bold]    {mode}\n"
-        f"[bold]Synth:[/bold]   {strategy}",
-        title="[bold cyan]Broadside[/bold cyan]",
-        border_style="cyan",
-        padding=(1, 2),
-    ))
+    console.print(
+        Panel(
+            f"[bold]Prompt:[/bold]  {_truncate_prompt(task.prompt)}\n"
+            f"[bold]Model:[/bold]   {model_display}\n"
+            f"[bold]Backend:[/bold] {backend}\n"
+            f"[bold]Agents:[/bold]  {n}\n"
+            f"[bold]Mode:[/bold]    {mode}\n"
+            f"[bold]Synth:[/bold]   {strategy}",
+            title="[bold cyan]Broadside[/bold cyan]",
+            border_style="cyan",
+            padding=(1, 2),
+        )
+    )
     console.print()
 
     # --- Scatter phase with live progress ---
@@ -184,6 +203,7 @@ async def _run_pipeline(
         with progress:
             ptask = progress.add_task("Scattering agents", total=n)
             from broadside_ai.backends import get_backend
+
             llm = get_backend(backend, **backend_kwargs)
             prompt = task.render_prompt()
             for i in range(n):
@@ -227,7 +247,7 @@ async def _run_pipeline(
     n_ok = len(results)
     console.print(
         f"  [green]\u2713[/green] {n_ok}/{n} agents returned "
-        f"[dim]({scatter_tokens:,} tokens, {scatter_wall/1000:.1f}s)[/dim]"
+        f"[dim]({scatter_tokens:,} tokens, {scatter_wall / 1000:.1f}s)[/dim]"
     )
 
     # Gather
@@ -236,7 +256,8 @@ async def _run_pipeline(
     if raw:
         _show_raw(gathered.texts, False)
         if save:
-            _save_raw(gathered.texts, task, output_dir, model_hint=_model_dir_name(gathered.results))
+            model_hint = _model_dir_name(gathered.results)
+            _save_raw(gathered.texts, task, output_dir, model_hint=model_hint)
         return
 
     # --- Synthesis phase ---
@@ -260,7 +281,7 @@ async def _run_pipeline(
 
     console.print(
         f"  [green]\u2713[/green] Synthesis complete "
-        f"[dim]({result.synthesis_tokens:,} tokens, {synth_wall/1000:.1f}s)[/dim]"
+        f"[dim]({result.synthesis_tokens:,} tokens, {synth_wall / 1000:.1f}s)[/dim]"
     )
     console.print()
 
@@ -288,8 +309,12 @@ async def _run_pipeline_quiet(
 
     t0 = time.perf_counter()
     results = await scatter(
-        task=task, n=n, backend=backend, backend_kwargs=backend_kwargs,
-        budget=budget, parallel=run_parallel,
+        task=task,
+        n=n,
+        backend=backend,
+        backend_kwargs=backend_kwargs,
+        budget=budget,
+        parallel=run_parallel,
     )
     wall_ms = (time.perf_counter() - t0) * 1000
 
@@ -302,11 +327,14 @@ async def _run_pipeline_quiet(
     if raw:
         _show_raw(gathered.texts, True)
         if save:
-            _save_raw(gathered.texts, task, output_dir, model_hint=_model_dir_name(gathered.results))
+            model_hint = _model_dir_name(gathered.results)
+            _save_raw(gathered.texts, task, output_dir, model_hint=model_hint)
         return
 
     result = await synthesize(
-        gathered=gathered, strategy=strategy, backend=backend,
+        gathered=gathered,
+        strategy=strategy,
+        backend=backend,
         backend_kwargs=backend_kwargs,
     )
     _show_json(result)
@@ -339,8 +367,8 @@ def _slugify(text: str, max_len: int = 40) -> str:
     import re
 
     slug = text.lower().strip()
-    slug = re.sub(r"[^\w\s-]", "", slug)     # drop punctuation
-    slug = re.sub(r"[\s_]+", "-", slug)       # spaces/underscores → hyphens
+    slug = re.sub(r"[^\w\s-]", "", slug)  # drop punctuation
+    slug = re.sub(r"[\s_]+", "-", slug)  # spaces/underscores → hyphens
     slug = re.sub(r"-+", "-", slug).strip("-")  # collapse runs
     return slug[:max_len].rstrip("-")
 
@@ -487,19 +515,21 @@ def _show_rich(result: Any, total_wall_ms: float | None = None) -> None:
     assert isinstance(result, Synthesis)
 
     # Synthesis output
-    console.print(Panel(
-        result.result,
-        title="[bold green]Synthesis[/bold green]",
-        border_style="green",
-        padding=(1, 2),
-    ))
+    console.print(
+        Panel(
+            result.result,
+            title="[bold green]Synthesis[/bold green]",
+            border_style="green",
+            padding=(1, 2),
+        )
+    )
 
     # Stats bar
     wall = total_wall_ms or result.gather.wall_clock_ms
     stats_parts = [
         f"[bold]{result.gather.n_completed}[/bold] agents",
         f"[bold]{result.total_tokens():,}[/bold] tokens",
-        f"[bold]{wall/1000:.1f}s[/bold] total",
+        f"[bold]{wall / 1000:.1f}s[/bold] total",
         f"strategy: [bold]{result.strategy}[/bold]",
     ]
     sep = " \u2502 "

@@ -51,9 +51,7 @@ def validate_task_file(path: str) -> list[str]:
         if "name" not in meta:
             errors.append("meta.name is recommended")
         if "category" in meta and meta["category"] not in VALID_CATEGORIES:
-            errors.append(
-                f"meta.category '{meta['category']}' not in {VALID_CATEGORIES}"
-            )
+            errors.append(f"meta.category '{meta['category']}' not in {VALID_CATEGORIES}")
         if "recommended_strategy" in meta and meta["recommended_strategy"] not in VALID_STRATEGIES:
             errors.append(
                 f"meta.recommended_strategy '{meta['recommended_strategy']}' "
@@ -65,8 +63,7 @@ def validate_task_file(path: str) -> list[str]:
                 errors.append("meta.recommended_n must be a positive integer")
             elif n > 10:
                 errors.append(
-                    f"meta.recommended_n is {n}. Performance plateaus at 3-5. "
-                    f"Are you sure?"
+                    f"meta.recommended_n is {n}. Performance plateaus at 3-5. Are you sure?"
                 )
 
     return errors

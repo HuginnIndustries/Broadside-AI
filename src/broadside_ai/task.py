@@ -15,12 +15,10 @@ class Task(BaseModel):
     and return a structured table."
     """
 
-    prompt: str = Field(
-        description="The instruction each scattered agent receives."
-    )
+    prompt: str = Field(description="The instruction each scattered agent receives.")
     context: dict[str, Any] = Field(
         default_factory=dict,
-        description="Key-value pairs injected into the prompt. Agents see these as grounding data.",
+        description="Key-value pairs injected into the prompt. Grounding data.",
     )
     output_schema: dict[str, Any] | None = Field(
         default=None,

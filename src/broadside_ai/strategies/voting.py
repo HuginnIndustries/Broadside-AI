@@ -74,7 +74,7 @@ async def _vote_with_extraction(llm: Any, gathered: GatherResult) -> Synthesis:
 
     # Build result
     vote_summary = "\n".join(
-        f"  {label}: {count}/{total} votes ({count/total:.0%})"
+        f"  {label}: {count}/{total} votes ({count / total:.0%})"
         for label, count in vote_counts.most_common()
     )
 
