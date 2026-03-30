@@ -14,7 +14,7 @@ a phase can land in any order.
 
 Goal: `pip install broadside-ai && python quickstart.py` works on first try, no API keys.
 
-**Status: ~85% complete.** All core functionality works. Two items remain: CI pipeline and model catalog discovery.
+**Status: ~92% complete.** All core functionality works. One item remains: model catalog discovery.
 
 - [x] Package structure (`pyproject.toml`, src layout, extras for backends)
 - [x] Core primitives: `Task`, `ScatterConfig`, `gather()`, `synthesize()`
@@ -24,7 +24,7 @@ Goal: `pip install broadside-ai && python quickstart.py` works on first try, no 
 - [x] CLI entrypoint (`broadside-ai run` + `python -m broadside_ai` for Windows)
 - [x] Budget circuit breaker (per-scatter cost limit + global kill switch)
 - [x] Quick start example (copy-pasteable, under 15 lines, runs against Ollama)
-- [ ] CI pipeline that runs quick start as a test
+- [x] CI pipeline (GitHub Actions: lint + typecheck + test on Python 3.10–3.12)
 - [x] README (follows research structure: tagline → problem → quick start → architecture)
 - [x] `llms.txt` for AI-friendly project description
 - [x] Nested output directory structure (`broadside_ai_output/model/topic_timestamp/`)
@@ -116,9 +116,9 @@ These items cut across phases and should be addressed before advancing further:
 
 | Gap | Impact | Effort |
 |---|---|---|
-| **No CI pipeline** | Can't verify PRs; regressions go unnoticed | Low (GitHub Actions + `make test`) |
-| **Thin test coverage** | Only 3 unit test files (`test_task.py`, `test_budget.py`, `test_gather.py`); no tests for CLI, backends, synthesis strategies, or conflicts | Medium |
-| **No strategy tests** | Consensus and voting strategies are untested | Low–Medium |
+| ~~No CI pipeline~~ | ✓ Resolved — GitHub Actions on push/PR | — |
+| **Thin test coverage** | 7 test files now (added strategies, conflicts, integration); CLI and backend tests still missing | Medium |
+| ~~No strategy tests~~ | ✓ Resolved — consensus, voting, and conflict detection tested | — |
 
 ## Recommended next steps
 
