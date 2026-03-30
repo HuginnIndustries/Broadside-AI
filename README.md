@@ -1,4 +1,4 @@
-# Broadside
+# Broadside-AI
 
 **2.52x faster than sequential on Claude Sonnet 4** — code review hits 2.94x (near the 3.0x theoretical max with 3 agents). Real benchmarks, real numbers. [See full results below.](#benchmarks)
 
