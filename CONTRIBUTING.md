@@ -7,7 +7,7 @@ file without touching core code.
 ## Quick Start (5 minutes)
 
 ```bash
-git clone https://github.com/jsesler/broadside.git
+git clone https://github.com/huginnindustries/broadside.git
 cd broadside
 pip install -e ".[dev]"
 make test
@@ -27,14 +27,14 @@ context and output schema. See `tasks/README.md` for the schema.
 cp tasks/_template.yaml tasks/my_task.yaml
 # Edit it
 # Validate
-python -m broadside.task_validator tasks/my_task.yaml
+python -m broadside_ai.task_validator tasks/my_task.yaml
 # Open a PR — no issue required for task contributions
 ```
 
 ### 2. Synthesis Strategies
 
 New ways to collapse N outputs into one. Look at
-`src/broadside/strategies/consensus.py` for the pattern. Ideas:
+`src/broadside_ai/strategies/consensus.py` for the pattern. Ideas:
 
 - Weighted merge (scored recommendations)
 - Structured extraction (pull specific fields from each output)
@@ -57,7 +57,7 @@ structure.
 ### 4. Backend Integrations
 
 Add support for a new LLM provider. Implement the `Backend` interface in
-`src/broadside/backends/base.py`. Current backends (Ollama, Anthropic, OpenAI)
+`src/broadside_ai/backends/base.py`. Current backends (Ollama, Anthropic, OpenAI)
 are good reference implementations.
 
 Open an issue first.

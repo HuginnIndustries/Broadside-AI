@@ -7,7 +7,7 @@ Hierarchical agent frameworks fail 41–86.7% of the time, with coordination bre
 ## Install
 
 ```bash
-pip install broadside
+pip install broadside-ai
 ```
 
 ## Quick Start
@@ -15,8 +15,8 @@ pip install broadside
 Install [Ollama](https://ollama.ai), sign in for free cloud access, and run:
 
 ```bash
-pip install broadside
-python -m broadside run --prompt "Write a pitch for a dotfile manager" --n 3
+pip install broadside-ai
+python -m broadside_ai run --prompt "Write a pitch for a dotfile manager" --n 3
 ```
 
 The `--n 3` means "scatter to 3 parallel agents." Research shows 3–5 is the sweet spot — beyond that, output quality plateaus while costs scale linearly (DeepMind 2025).
@@ -24,20 +24,20 @@ The `--n 3` means "scatter to 3 parallel agents." Research shows 3–5 is the sw
 The default model is `nemotron-3-super:cloud`, which runs on Ollama's cloud (free tier, no GPU needed). To use a different cloud model:
 
 ```bash
-python -m broadside run --prompt "Write a pitch for a dotfile manager" --n 3 --model gpt-oss:120b-cloud
+python -m broadside_ai run --prompt "Write a pitch for a dotfile manager" --n 3 --model gpt-oss:120b-cloud
 ```
 
 **Have a GPU?** Pull a local model and skip the cloud entirely:
 
 ```bash
 ollama pull gemma3:1b
-python -m broadside run --prompt "Write a pitch for a dotfile manager" --n 3 --model gemma3:1b
+python -m broadside_ai run --prompt "Write a pitch for a dotfile manager" --n 3 --model gemma3:1b
 ```
 
 ### Python API
 
 ```python
-from broadside import Task, run_sync
+from broadside_ai import Task, run_sync
 
 task = Task(
     prompt="Write a one-paragraph pitch for a CLI tool that helps developers manage dotfiles.",
@@ -50,7 +50,7 @@ print(result.result)
 For async code, use `run()` directly:
 
 ```python
-from broadside import Task, run
+from broadside_ai import Task, run
 
 result = await run(task, n=3, backend="ollama")
 ```
@@ -63,7 +63,7 @@ Task → Scatter (N parallel agents) → Gather → Synthesize → Human checkpo
 
 Each agent runs independently — no shared state, no waiting on other agents. The synthesis step identifies consensus, flags outliers, and produces a single actionable output. The gather step is the natural point for human review.
 
-Results are saved to `broadside_output/` organized by model and topic for easy comparison across runs.
+Results are saved to `broadside_ai_output/` organized by model and topic for easy comparison across runs.
 
 ## Synthesis Strategies
 
@@ -78,7 +78,7 @@ Broadside ships with three strategies for collapsing N outputs into one:
 Note: the default `llm` strategy calls the model one additional time for synthesis. In practice, synthesis can use as many tokens as the scatter itself. For cost-sensitive workloads, `consensus` or `voting` are lighter alternatives.
 
 ```bash
-python -m broadside run --prompt "Your task" --n 3 --synthesis voting
+python -m broadside_ai run --prompt "Your task" --n 3 --synthesis voting
 ```
 
 ## Backends
@@ -88,7 +88,7 @@ python -m broadside run --prompt "Your task" --n 3 --synthesis voting
 Ollama is the default backend and ships with the base install. Sign in to the [Ollama](https://ollama.ai) app for free cloud access — no GPU required.
 
 ```bash
-python -m broadside run --prompt "Your task" --n 3
+python -m broadside_ai run --prompt "Your task" --n 3
 ```
 
 All models run in parallel by default. Use `--sequential` if your hardware can't handle concurrent inference.
@@ -116,7 +116,7 @@ Have a GPU? Pull a local model instead:
 
 ```bash
 ollama pull gemma3:1b
-python -m broadside run --prompt "Your task" --n 3 --model gemma3:1b
+python -m broadside_ai run --prompt "Your task" --n 3 --model gemma3:1b
 ```
 
 ### Anthropic
@@ -124,7 +124,7 @@ python -m broadside run --prompt "Your task" --n 3 --model gemma3:1b
 Uses the Anthropic Messages API. Default model: `claude-sonnet-4-20250514`.
 
 ```bash
-pip install broadside[anthropic]
+pip install broadside-ai[anthropic]
 ```
 
 Set your API key:
@@ -141,13 +141,13 @@ export ANTHROPIC_API_KEY=your-key-here
 ```
 
 ```bash
-python -m broadside run --prompt "Your task" --n 3 --backend anthropic
+python -m broadside_ai run --prompt "Your task" --n 3 --backend anthropic
 ```
 
 Or specify a model:
 
 ```bash
-python -m broadside run --prompt "Your task" --n 3 --backend anthropic --model claude-sonnet-4-20250514
+python -m broadside_ai run --prompt "Your task" --n 3 --backend anthropic --model claude-sonnet-4-20250514
 ```
 
 ### OpenAI (and compatible APIs)
@@ -155,7 +155,7 @@ python -m broadside run --prompt "Your task" --n 3 --backend anthropic --model c
 Works with OpenAI, Azure OpenAI, and any API that implements the OpenAI chat completions interface (vLLM, Together, Groq, etc.). Default model: `gpt-4o-mini`.
 
 ```bash
-pip install broadside[openai]
+pip install broadside-ai[openai]
 ```
 
 Set your API key:
@@ -172,7 +172,7 @@ export OPENAI_API_KEY=your-key-here
 ```
 
 ```bash
-python -m broadside run --prompt "Your task" --n 3 --backend openai
+python -m broadside_ai run --prompt "Your task" --n 3 --backend openai
 ```
 
 For OpenAI-compatible providers, pass `--model` and set `OPENAI_BASE_URL` the same way to point at your provider.
@@ -180,7 +180,7 @@ For OpenAI-compatible providers, pass `--model` and set `OPENAI_BASE_URL` the sa
 ### All backends at once
 
 ```bash
-pip install broadside[all]
+pip install broadside-ai[all]
 ```
 
 ## Benchmarks

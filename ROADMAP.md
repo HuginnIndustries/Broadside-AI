@@ -7,20 +7,20 @@ a phase can land in any order.
 
 ## Phase 0 — Foundation (launch blocker)
 
-Goal: `pip install broadside && python quickstart.py` works on first try, no API keys.
+Goal: `pip install broadside-ai && python quickstart.py` works on first try, no API keys.
 
 - [x] Package structure (`pyproject.toml`, src layout, extras for backends)
 - [x] Core primitives: `Task`, `ScatterConfig`, `gather()`, `synthesize()`
 - [x] Ollama backend (base install, no API key required)
-- [x] Anthropic backend (`pip install broadside[anthropic]`)
-- [x] OpenAI-compatible backend (`pip install broadside[openai]`)
-- [x] CLI entrypoint (`broadside run` + `python -m broadside` for Windows)
+- [x] Anthropic backend (`pip install broadside-ai[anthropic]`)
+- [x] OpenAI-compatible backend (`pip install broadside-ai[openai]`)
+- [x] CLI entrypoint (`broadside-ai run` + `python -m broadside_ai` for Windows)
 - [x] Budget circuit breaker (per-scatter cost limit + global kill switch)
 - [x] Quick start example (copy-pasteable, under 15 lines, runs against Ollama)
 - [ ] CI pipeline that runs quick start as a test
 - [x] README (follows research structure: tagline → problem → quick start → architecture)
 - [x] `llms.txt` for AI-friendly project description
-- [x] Nested output directory structure (`broadside_output/model/topic_timestamp/`)
+- [x] Nested output directory structure (`broadside_ai_output/model/topic_timestamp/`)
 - [x] Sequential/parallel auto-detection (local Ollama sequential, cloud parallel)
 - [x] Cloud model support (`:cloud` tag detection for Ollama cloud models)
 - [ ] Model listing / discovery for Anthropic and OpenAI (their catalogs change with releases)

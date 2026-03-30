@@ -14,9 +14,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from broadside.backends import get_backend
-from broadside.gather import GatherResult
-from broadside.synthesize import Synthesis
+from broadside_ai.backends import get_backend
+from broadside_ai.gather import GatherResult
+from broadside_ai.synthesize import Synthesis
 
 
 async def synthesize_consensus(

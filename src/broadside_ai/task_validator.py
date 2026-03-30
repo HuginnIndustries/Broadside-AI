@@ -1,6 +1,6 @@
 """Task file validator — validates YAML task definitions against the schema.
 
-Usage: python -m broadside.task_validator tasks/my_task.yaml
+Usage: python -m broadside_ai.task_validator tasks/my_task.yaml
 """
 
 from __future__ import annotations
@@ -10,7 +10,7 @@ from pathlib import Path
 
 import yaml
 
-from broadside.task import Task
+from broadside_ai.task import Task
 
 VALID_CATEGORIES = {"creative", "analytical", "classification", "summarization", "code_review"}
 VALID_STRATEGIES = {"llm", "consensus", "voting"}
@@ -74,7 +74,7 @@ def validate_task_file(path: str) -> list[str]:
 
 def main() -> None:
     if len(sys.argv) < 2:
-        print("Usage: python -m broadside.task_validator <task_file.yaml> [...]")
+        print("Usage: python -m broadside_ai.task_validator <task_file.yaml> [...]")
         sys.exit(1)
 
     all_valid = True

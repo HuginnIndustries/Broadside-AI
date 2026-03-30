@@ -7,10 +7,10 @@ import logging
 import time
 from typing import Any
 
-from broadside.backends import get_backend
-from broadside.backends.base import AgentResult
-from broadside.budget import BudgetExceeded, ScatterBudget
-from broadside.task import Task
+from broadside_ai.backends import get_backend
+from broadside_ai.backends.base import AgentResult
+from broadside_ai.budget import BudgetExceeded, ScatterBudget
+from broadside_ai.task import Task
 
 logger = logging.getLogger(__name__)
 

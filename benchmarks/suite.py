@@ -23,8 +23,8 @@ from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn, TimeEl
 from rich.table import Table
 from rich.text import Text
 
-from broadside.benchmark import run_benchmark_suite
-from broadside.task import Task
+from broadside_ai.benchmark import run_benchmark_suite
+from broadside_ai.task import Task
 
 console = Console()
 
@@ -271,7 +271,7 @@ async def main() -> None:
                 on_task_start(name, i, total)
                 live.update(_build_results_table(completed, task_names, current_idx))
 
-                from broadside.benchmark import benchmark_task
+                from broadside_ai.benchmark import benchmark_task
                 r = await benchmark_task(
                     task=task,
                     task_name=name,
@@ -289,7 +289,7 @@ async def main() -> None:
     suite_elapsed = time.perf_counter() - suite_start
 
     # Save results
-    from broadside.benchmark import _build_run_dir, _save_benchmark_results
+    from broadside_ai.benchmark import _build_run_dir, _save_benchmark_results
     run_dir = _build_run_dir("benchmarks/results", results, backend, bk)
     _save_benchmark_results(results, run_dir, n, backend, bk)
 

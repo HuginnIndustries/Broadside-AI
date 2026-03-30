@@ -11,7 +11,7 @@ lint:
 	ruff format --check src/ tests/
 
 typecheck:
-	mypy src/broadside/
+	mypy src/broadside_ai/
 
 clean:
 	rm -rf dist/ build/ *.egg-info src/*.egg-info

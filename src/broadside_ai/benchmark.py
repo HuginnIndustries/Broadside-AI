@@ -17,13 +17,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from broadside.backends import get_backend
-from broadside.backends.base import AgentResult
-from broadside.gather import gather
-from broadside.run import run
-from broadside.scatter import scatter
-from broadside.synthesize import Synthesis
-from broadside.task import Task
+from broadside_ai.backends import get_backend
+from broadside_ai.backends.base import AgentResult
+from broadside_ai.gather import gather
+from broadside_ai.run import run
+from broadside_ai.scatter import scatter
+from broadside_ai.synthesize import Synthesis
+from broadside_ai.task import Task
 
 
 @dataclass
@@ -168,7 +168,7 @@ async def benchmark_task(
     result.scatter_outputs = gathered.texts
 
     # --- Synthesis (measured separately so we can report its cost) ---
-    from broadside.synthesize import synthesize
+    from broadside_ai.synthesize import synthesize
     synthesis = await synthesize(
         gathered,
         strategy="llm",
@@ -416,7 +416,7 @@ def _save_benchmark_results(
         f"## Reproduce",
         f"",
         f"```bash",
-        f"pip install broadside",
+        f"pip install broadside-ai",
         f"python benchmarks/suite.py",
         f"```",
         f"",

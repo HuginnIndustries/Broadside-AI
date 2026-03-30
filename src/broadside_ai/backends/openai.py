@@ -1,4 +1,4 @@
-"""OpenAI-compatible backend — requires `pip install broadside[openai]`.
+"""OpenAI-compatible backend — requires `pip install broadside-ai[openai]`.
 
 Works with OpenAI, Azure OpenAI, and any API that implements the
 OpenAI chat completions interface (vLLM, Together, Groq, etc.).
@@ -14,11 +14,11 @@ try:
 except ImportError as e:
     raise ImportError(
         "OpenAI backend requires the openai package. "
-        "Install it with: pip install broadside[openai]"
+        "Install it with: pip install broadside-ai[openai]"
     ) from e
 
-from broadside.backends import register
-from broadside.backends.base import AgentResult, Backend
+from broadside_ai.backends import register
+from broadside_ai.backends.base import AgentResult, Backend
 
 _DEFAULT_MODEL = "gpt-4o-mini"
 

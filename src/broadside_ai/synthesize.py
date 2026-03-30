@@ -15,9 +15,9 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from broadside.backends import get_backend
-from broadside.backends.base import AgentResult
-from broadside.gather import GatherResult
+from broadside_ai.backends import get_backend
+from broadside_ai.backends.base import AgentResult
+from broadside_ai.gather import GatherResult
 
 
 @dataclass
@@ -59,11 +59,11 @@ async def synthesize(
     if strategy == "llm":
         return await _synthesize_llm(gathered, backend, backend_kwargs, model)
     elif strategy == "consensus":
-        from broadside.strategies.consensus import synthesize_consensus
+        from broadside_ai.strategies.consensus import synthesize_consensus
 
         return await synthesize_consensus(gathered, backend, backend_kwargs, model)
     elif strategy == "voting":
-        from broadside.strategies.voting import synthesize_voting
+        from broadside_ai.strategies.voting import synthesize_voting
 
         return await synthesize_voting(gathered, backend, backend_kwargs, model)
     else:

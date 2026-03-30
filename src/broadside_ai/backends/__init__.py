@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from broadside.backends.base import Backend
+    from broadside_ai.backends.base import Backend
 
 _REGISTRY: dict[str, type[Backend]] = {}
 
@@ -28,7 +28,7 @@ def get_backend(name: str, **kwargs: object) -> Backend:
         available = ", ".join(sorted(_REGISTRY.keys())) or "(none)"
         raise ValueError(
             f"Unknown backend '{name}'. Available: {available}. "
-            f"You may need to install an extra: pip install broadside[{name}]"
+            f"You may need to install an extra: pip install broadside-ai[{name}]"
         )
     return _REGISTRY[name](**kwargs)
 
@@ -36,9 +36,9 @@ def get_backend(name: str, **kwargs: object) -> Backend:
 def _try_load_builtin(name: str) -> None:
     """Attempt to import a built-in backend module to trigger registration."""
     builtins = {
-        "ollama": "broadside.backends.ollama",
-        "anthropic": "broadside.backends.anthropic",
-        "openai": "broadside.backends.openai",
+        "ollama": "broadside_ai.backends.ollama",
+        "anthropic": "broadside_ai.backends.anthropic",
+        "openai": "broadside_ai.backends.openai",
     }
     if name in builtins:
         try:

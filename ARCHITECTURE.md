@@ -62,7 +62,7 @@ provider is ~50 lines of code.
 The Ollama backend uses only `httpx` (already a dependency). Anthropic and
 OpenAI are optional extras.
 
-Why: someone should be able to `pip install broadside` and run the quick start
+Why: someone should be able to `pip install broadside-ai` and run the quick start
 without an API key. First impressions are permanent.
 
 ### Budget circuit breakers are mandatory

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from broadside.backends.base import AgentResult
+from broadside_ai.backends.base import AgentResult
 
 
 @dataclass
