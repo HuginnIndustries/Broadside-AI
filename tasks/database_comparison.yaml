@@ -1,0 +1,16 @@
+prompt: |
+  Compare SQLite, PostgreSQL, and DuckDB for a read-heavy analytics workload
+  processing 10 million rows on a single machine. Cover:
+  1. Query speed for aggregation queries
+  2. Memory usage under load
+  3. Operational complexity (setup, maintenance, backups)
+  4. Ecosystem maturity (libraries, tooling, community)
+
+  Return a structured comparison with a clear recommendation.
+
+meta:
+  name: "database_comparison"
+  category: "analytical"
+  recommended_n: 3
+  recommended_strategy: "consensus"
+  description: "Factual comparison where consensus reveals the most accurate assessment."

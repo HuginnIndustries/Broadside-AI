@@ -1,0 +1,24 @@
+prompt: |
+  Review this Python function for bugs, performance issues, and style problems.
+  List every issue you find with severity (critical/high/medium/low).
+
+  ```python
+  def get_users(db, filters={}):
+      query = f'SELECT * FROM users WHERE 1=1'
+      for key, val in filters.items():
+          query += f" AND {key} = '{val}'"
+      results = db.execute(query)
+      users = []
+      for row in results:
+          user = dict(row)
+          user['password'] = decrypt(user['password'])
+          users.append(user)
+      return users
+  ```
+
+meta:
+  name: "code_review"
+  category: "code_review"
+  recommended_n: 3
+  recommended_strategy: "consensus"
+  description: "Parallel code review where gather catches more issues than any single agent."

@@ -1,0 +1,21 @@
+prompt: |
+  Classify the following customer support message into exactly one category:
+  billing_issue, technical_support, feature_request, praise, or spam.
+
+  Message: "I've been trying to export my data for three days now and the
+  CSV download just hangs at 99%. I need this for a board meeting tomorrow.
+  Please help urgently."
+
+  Return your classification and a brief justification.
+
+output_schema:
+  label: "string (one of: billing_issue, technical_support, feature_request, praise, spam)"
+  confidence: "float (0.0 to 1.0)"
+  reasoning: "string"
+
+meta:
+  name: "ticket_classification"
+  category: "classification"
+  recommended_n: 5
+  recommended_strategy: "voting"
+  description: "Discrete classification where voting produces the most reliable label."

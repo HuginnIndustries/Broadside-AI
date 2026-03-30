@@ -1,0 +1,23 @@
+# Task Template — copy this file and fill in your task
+#
+# A good task passes the "can you tell if it's done?" test.
+# Not "research X" but "compare X across these 5 dimensions and return a table."
+
+prompt: "Your task prompt here. Be specific about what you want back."
+
+# Optional: grounding data the agents can reference
+# context:
+#   product: "Description of the product"
+#   audience: "Who this is for"
+
+# Optional: expected output shape (helps synthesis and validation)
+# output_schema:
+#   field_name: "type"
+
+# Metadata for the task library (not sent to agents)
+meta:
+  name: "your_task_name"
+  category: "creative"  # creative|analytical|classification|summarization|code_review
+  recommended_n: 3
+  recommended_strategy: "llm"  # llm|consensus|voting
+  description: "What this task demonstrates."

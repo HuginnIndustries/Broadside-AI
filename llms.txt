@@ -1,0 +1,36 @@
+# Broadside
+
+> A Python framework for parallel LLM agent orchestration using scatter/gather instead of hierarchy.
+
+Broadside implements the scatter/gather pattern as its core organizing principle. A task is scattered to N parallel agents (default 3-5), results are gathered, and a synthesis step produces a single output. No inter-agent communication, no hierarchy, no coordination overhead.
+
+## Core concepts
+
+- Task: a tightly scoped unit of work with a clear output
+- Scatter: fan a task to N parallel agents
+- Gather: collect and normalize outputs
+- Synthesize: collapse N outputs into one (consensus, voting, or LLM-based)
+- Budget: per-scatter token limits (scatter/gather multiplies costs ~15x)
+
+## Backends
+
+- Ollama (local, no API key, base install)
+- Anthropic (optional extra)
+- OpenAI-compatible (optional extra)
+
+## Quick start
+
+```python
+import asyncio
+from broadside import Task, run
+
+task = Task(prompt="Your task here")
+result = asyncio.run(run(task, n=3, backend="ollama"))
+print(result.result)
+```
+
+## Links
+
+- Source: https://github.com/jsesler/broadside
+- Docs: https://jsesler.github.io/broadside
+- PyPI: https://pypi.org/project/broadside/

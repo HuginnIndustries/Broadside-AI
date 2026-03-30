@@ -1,0 +1,11 @@
+prompt: |
+  Summarize the key tradeoffs of microservices vs monolith architecture for a
+  startup with 5 engineers building a B2B SaaS product. Keep it under 200 words
+  and be opinionated about what they should choose.
+
+meta:
+  name: "architecture_summary"
+  category: "summarization"
+  recommended_n: 3
+  recommended_strategy: "consensus"
+  description: "Opinionated summary where consensus reveals the strongest recommendation."
