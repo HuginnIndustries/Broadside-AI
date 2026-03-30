@@ -7,8 +7,8 @@ file without touching core code.
 ## Quick Start (5 minutes)
 
 ```bash
-git clone https://github.com/huginnindustries/broadside.git
-cd broadside
+git clone https://github.com/HuginnIndustries/Broadside-AI.git
+cd Broadside-AI
 pip install -e ".[dev]"
 make test
 ```
