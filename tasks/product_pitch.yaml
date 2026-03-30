@@ -1,12 +1,11 @@
 prompt: |
-  You are a naval strategist. Draft a one-page battle plan for a fleet of
-  12 ships approaching a fortified harbor at dawn. Cover: formation,
-  timing, diversion tactics, and contingency if wind shifts. Be specific
-  about which ships take which roles.
+  Write a one-paragraph pitch for a CLI tool that helps developers manage
+  dotfiles across multiple machines. The pitch should be compelling, specific,
+  and mention at least one concrete pain point it solves.
 
 meta:
-  name: "battle_plan"
+  name: "product_pitch"
   category: "creative"
   recommended_n: 5
   recommended_strategy: "llm"
-  description: "Strategic planning where diverse perspectives reveal different tactical angles."
+  description: "Creative writing where diversity across outputs reveals the strongest angles."

@@ -17,7 +17,7 @@ from broadside import Task, run_sync
 
 # Define what you want — be specific about the output
 task = Task(
-    prompt="Compare the tactics of Nelson at Trafalgar vs Yi Sun-sin at Myeongnyang.",
+    prompt="Write a one-paragraph pitch for a CLI tool that helps developers manage dotfiles.",
 )
 
 # Scatter to 3 agents, gather results, synthesize into one answer

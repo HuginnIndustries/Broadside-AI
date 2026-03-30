@@ -33,8 +33,8 @@ TASKS = [
         "creative_pitch",
         Task(
             prompt=(
-                "Write a one-paragraph pitch for a naval strategy game where "
-                "players command age-of-sail warships in real-time fleet battles. "
+                "Write a one-paragraph pitch for a developer tool that "
+                "automatically generates changelog entries from git commits. "
                 "Make it compelling and specific."
             ),
         ),

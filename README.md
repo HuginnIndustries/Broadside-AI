@@ -1,18 +1,5 @@
 # Broadside
 
-```
-                                __/|
-                          _____/   |___
-                    _____/ BROADSIDE   \____
-              _____/  _|__|__|__|__|__|_    \____
-        _____/        | o> o> o> o> o> |         \____
-  _____|______________|________________|______________|_____
-  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        scatter              gather             synthesize
-```
-
-**A Python framework for parallel LLM agent orchestration using scatter/gather instead of hierarchy.**
-
 **2.52x faster than sequential on Claude Sonnet 4** — code review hits 2.94x (near the 3.0x theoretical max with 3 agents). Real benchmarks, real numbers. [See full results below.](#benchmarks)
 
 Hierarchical agent frameworks fail 41–86.7% of the time, with coordination breakdowns as the single largest failure category at 36.9%. Broadside takes a different approach: scatter your task to N parallel agents, gather the results, synthesize. No org charts, no inter-agent messaging, no coordination overhead.
@@ -29,7 +16,7 @@ Install [Ollama](https://ollama.ai), sign in for free cloud access, and run:
 
 ```bash
 pip install broadside
-python -m broadside run --prompt "Write a battle plan for a naval fleet ambush at dawn" --n 3
+python -m broadside run --prompt "Write a pitch for a dotfile manager" --n 3
 ```
 
 The `--n 3` means "scatter to 3 parallel agents." Research shows 3–5 is the sweet spot — beyond that, output quality plateaus while costs scale linearly (DeepMind 2025).
@@ -37,14 +24,14 @@ The `--n 3` means "scatter to 3 parallel agents." Research shows 3–5 is the sw
 The default model is `nemotron-3-super:cloud`, which runs on Ollama's cloud (free tier, no GPU needed). To use a different cloud model:
 
 ```bash
-python -m broadside run --prompt "Write a battle plan for a naval fleet ambush at dawn" --n 3 --model gpt-oss:120b-cloud
+python -m broadside run --prompt "Write a pitch for a dotfile manager" --n 3 --model gpt-oss:120b-cloud
 ```
 
 **Have a GPU?** Pull a local model and skip the cloud entirely:
 
 ```bash
 ollama pull gemma3:1b
-python -m broadside run --prompt "Write a battle plan for a naval fleet ambush at dawn" --n 3 --model gemma3:1b
+python -m broadside run --prompt "Write a pitch for a dotfile manager" --n 3 --model gemma3:1b
 ```
 
 ### Python API
@@ -53,7 +40,7 @@ python -m broadside run --prompt "Write a battle plan for a naval fleet ambush a
 from broadside import Task, run_sync
 
 task = Task(
-    prompt="Compare the tactics of Nelson at Trafalgar vs Yi Sun-sin at Myeongnyang.",
+    prompt="Write a one-paragraph pitch for a CLI tool that helps developers manage dotfiles.",
 )
 
 result = run_sync(task, n=3, backend="ollama")
@@ -248,24 +235,4 @@ Real numbers, 3 agents, parallel vs sequential on the same tasks:
 
 Local inference on modest hardware still shows gains on longer tasks (1.40x summarization, 1.20x analytical). Short tasks lose to overhead. Better hardware = better parallelism — this is the floor, not the ceiling.
 
-In early testing, Anthropic showed the most consistent speedups — every task benefited from parallelism, with code review hitting 2.94x (near the 3.0x theoretical max). Ollama cloud results (free tier) were more variable — Nemotron showed strong gains on short tasks while DeepSeek was more modest but consistent. Summarization occasionally runs slower in parallel due to rate limiting on the free tier; paid tiers may perform differently. These are single-run results and will vary by model, task, and cloud load.
-
-The cost multiplier is the honest tradeoff: you pay ~7-8x more tokens than a single call, but you get multiple diverse perspectives synthesized into one answer. Diversity scores above 0.7 mean the scatter is surfacing meaningfully different outputs, not just rephrasing the same answer.
-
-Results vary between runs depending on cloud load. Run the benchmarks yourself:
-
-```bash
-python benchmarks/suite.py
-```
-
-**Want to benchmark Anthropic, OpenAI, or a different model?** See **[benchmarks/README.md](benchmarks/README.md)** for copy-paste commands for every backend, output structure details, and how to contribute your own results.
-
-## When To Use Broadside
-
-**Good fit:** bounded tasks with verifiable outputs, problems where variance is informative (creative, analytical, research), any situation where you'd manually prompt an LLM multiple times and compare.
-
-**Poor fit:** long-running stateful tasks, real-time inter-agent coordination, single-correct-answer problems that can be cheaply verified.
-
-## License
-
-MIT
+In early testing, Anthropic showed the most consistent speedups — every task benefited from parallelism, with code review hitting 2.94x (near the 3.0x theoretical max). Ollama cloud results (free tier) were more variable — Nemotron showed strong gains on short tasks while DeepSeek was more mod
