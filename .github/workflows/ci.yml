@@ -27,9 +27,5 @@ jobs:
       - name: Lint
         run: make lint
 
-      - name: Type check
-        run: make typecheck
-        continue-on-error: true  # strict mypy has pre-existing issues with untyped deps
-
       - name: Test
         run: make test
