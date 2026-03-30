@@ -36,7 +36,7 @@ class AnthropicBackend(Backend):
             raise RuntimeError(
                 "Anthropic API key not found. Set it with:\n"
                 "  Windows CMD:    set ANTHROPIC_API_KEY=sk-...\n"
-                "  PowerShell:     $env:ANTHROPIC_API_KEY=\"sk-...\"\n"
+                '  PowerShell:     $env:ANTHROPIC_API_KEY="sk-..."\n'
                 "  macOS/Linux:    export ANTHROPIC_API_KEY=sk-..."
             )
 

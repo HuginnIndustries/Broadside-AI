@@ -63,6 +63,7 @@ line-length = 99
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]
+ignore = ["N818"]  # BudgetExceeded is the established name
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

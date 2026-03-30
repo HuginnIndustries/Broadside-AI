@@ -20,9 +20,7 @@ from typing import Any
 from broadside_ai.backends import get_backend
 from broadside_ai.backends.base import AgentResult
 from broadside_ai.gather import gather
-from broadside_ai.run import run
 from broadside_ai.scatter import scatter
-from broadside_ai.synthesize import Synthesis
 from broadside_ai.task import Task
 
 
@@ -169,6 +167,7 @@ async def benchmark_task(
 
     # --- Synthesis (measured separately so we can report its cost) ---
     from broadside_ai.synthesize import synthesize
+
     synthesis = await synthesize(
         gathered,
         strategy="llm",
@@ -276,6 +275,7 @@ def _get_system_info() -> dict[str, Any]:
     try:
         if platform.system() == "Windows":
             import ctypes
+
             kernel32 = ctypes.windll.kernel32  # type: ignore[attr-defined]
 
             class MEMORYSTATUSEX(ctypes.Structure):
@@ -339,7 +339,7 @@ def _save_benchmark_results(
 
         # Scatter outputs
         for i, text in enumerate(r.scatter_outputs):
-            (task_dir / f"agent_{i+1}.txt").write_text(text, encoding="utf-8")
+            (task_dir / f"agent_{i + 1}.txt").write_text(text, encoding="utf-8")
 
         # Sequential baseline output
         if r.sequential_output:
@@ -355,8 +355,8 @@ def _save_benchmark_results(
 
     # --- Markdown report (human-readable, embeddable in docs) ---
     lines = [
-        f"# Benchmark Results",
-        f"",
+        "# Benchmark Results",
+        "",
         f"**Model:** {model}  ",
         f"**Backend:** {backend}  ",
         f"**Agents per scatter:** {n}  ",
@@ -365,18 +365,18 @@ def _save_benchmark_results(
         f"{system_info.get('cpu', 'unknown')}, "
         f"{system_info.get('cpu_count', '?')} cores, "
         f"{system_info.get('ram_gb', '?')} GB RAM  ",
-        f"",
-        f"## Results",
-        f"",
-        f"| Task | Parallel | Sequential | Speedup | Tokens (scatter+synth) | Cost vs 1 call | Diversity |",
-        f"|------|----------|------------|---------|----------------------|----------------|-----------|",
+        "",
+        "## Results",
+        "",
+        "| Task | Parallel | Sequential | Speedup | Tokens | Cost vs 1 | Diversity |",
+        "|------|----------|------------|---------|--------|-----------|-----------|",
     ]
 
     for r in results:
         lines.append(
             f"| {r.task_name} "
-            f"| {r.scatter_wall_ms/1000:.1f}s "
-            f"| {r.sequential_wall_ms/1000:.1f}s "
+            f"| {r.scatter_wall_ms / 1000:.1f}s "
+            f"| {r.sequential_wall_ms / 1000:.1f}s "
             f"| {r.speedup:.2f}x "
             f"| {r.scatter_total_tokens}+{r.synthesis_tokens}={r.total_tokens} "
             f"| {r.token_multiplier:.1f}x "
@@ -396,31 +396,33 @@ def _save_benchmark_results(
         f"| **{avg_diversity:.3f}** |"
     )
 
-    lines.extend([
-        f"",
-        f"## How to read this",
-        f"",
-        f"**Speedup** = sequential wall-clock / parallel wall-clock. "
-        f"Values above 1.0 mean parallel is faster. With {n} agents on a cloud "
-        f"backend, theoretical max is {n:.1f}x.",
-        f"",
-        f"**Cost vs 1 call** = total tokens (scatter + synthesis) / tokens for a "
-        f"single LLM call. This is the real cost question: how much more do you "
-        f"pay for scatter/gather vs just prompting once? Scatter alone costs ~{n}x; "
-        f"the LLM synthesis strategy adds another ~1x on top.",
-        f"",
-        f"**Diversity** = average pairwise Jaccard distance (word-level) across "
-        f"scatter outputs. 0.0 = identical, 1.0 = completely different. Higher "
-        f"diversity means the scatter is surfacing genuinely different perspectives.",
-        f"",
-        f"## Reproduce",
-        f"",
-        f"```bash",
-        f"pip install broadside-ai",
-        f"python benchmarks/suite.py",
-        f"```",
-        f"",
-        f"Results are written to `benchmarks/results/`.",
-    ])
+    lines.extend(
+        [
+            "",
+            "## How to read this",
+            "",
+            f"**Speedup** = sequential wall-clock / parallel wall-clock. "
+            f"Values above 1.0 mean parallel is faster. With {n} agents on a cloud "
+            f"backend, theoretical max is {n:.1f}x.",
+            "",
+            f"**Cost vs 1 call** = total tokens (scatter + synthesis) / tokens for a "
+            f"single LLM call. This is the real cost question: how much more do you "
+            f"pay for scatter/gather vs just prompting once? Scatter alone costs ~{n}x; "
+            f"the LLM synthesis strategy adds another ~1x on top.",
+            "",
+            "**Diversity** = average pairwise Jaccard distance (word-level) across "
+            "scatter outputs. 0.0 = identical, 1.0 = completely different. Higher "
+            "diversity means the scatter is surfacing genuinely different perspectives.",
+            "",
+            "## Reproduce",
+            "",
+            "```bash",
+            "pip install broadside-ai",
+            "python benchmarks/suite.py",
+            "```",
+            "",
+            "Results are written to `benchmarks/results/`.",
+        ]
+    )
 
     (run_dir / "RESULTS.md").write_text("\n".join(lines), encoding="utf-8")

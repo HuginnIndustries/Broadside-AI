@@ -1,6 +1,7 @@
 """Tests for budget circuit breaker."""
 
 import pytest
+
 from broadside_ai.budget import BudgetExceeded, ScatterBudget
 
 

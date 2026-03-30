@@ -41,7 +41,7 @@ class OpenAIBackend(Backend):
             raise RuntimeError(
                 "OpenAI API key not found. Set it with:\n"
                 "  Windows CMD:    set OPENAI_API_KEY=sk-...\n"
-                "  PowerShell:     $env:OPENAI_API_KEY=\"sk-...\"\n"
+                '  PowerShell:     $env:OPENAI_API_KEY="sk-..."\n'
                 "  macOS/Linux:    export OPENAI_API_KEY=sk-..."
             )
 
