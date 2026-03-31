@@ -4,9 +4,10 @@ Living document. Updated as work lands. Phases are sequential but items within
 a phase can land in any order.
 
 > **Project status: v0.1.0 alpha** — Core scatter/gather/synthesize pipeline
-> works across 3 backends (Ollama, Anthropic, OpenAI). Two synthesis strategies
-> (consensus, voting) and conflict detection are implemented. CI and test
-> coverage are the primary gaps.
+> works across 3 backends (Ollama, Anthropic, OpenAI). Four synthesis strategies
+> (LLM, consensus, voting, weighted merge), structured output schemas, early
+> termination, and conflict detection are implemented. Phase 1 (credibility)
+> is complete. Phase 2 (community) and Phase 3 (docs) are next.
 
 ---
 
@@ -36,12 +37,12 @@ Goal: `pip install broadside-ai && python quickstart.py` works on first try, no 
 
 Goal: real numbers that back up the README's claims.
 
-**Status: ~90% complete.** Benchmarks, all 4 synthesis strategies, conflict detection, structured output schemas, and early termination are done. Only the LangGraph comparison remains.
+**Status: Complete.** Benchmarks, all 4 synthesis strategies, conflict detection, structured output schemas, and early termination are done. LangGraph comparison skipped (see below).
 
 - [x] Benchmark harness (latency, token cost, output diversity)
 - [x] Benchmark suite: 3–5 task types (creative, analytical, classification, summarization, code review)
 - [x] Broadside vs. sequential baseline on same tasks (1.75x avg speedup, 2.88x peak)
-- [ ] Broadside vs. LangGraph fan-out on same tasks (if feasible without misrepresenting)
+- [x] ~~Broadside vs. LangGraph fan-out on same tasks~~ — N/A: LangGraph is a general DAG engine; comparing it to a single-pattern tool would be misleading
 - [x] Published benchmark results in `benchmarks/results/` with reproduction instructions
 - [x] Synthesis strategies beyond basic LLM aggregation:
   - [x] Consensus (best for knowledge tasks — ACL 2025 Kaesberg et al.)
