@@ -95,7 +95,7 @@ def _merge_fields(outputs: list[dict[str, Any]], weights: list[float]) -> dict[s
 
     merged: dict[str, Any] = {}
     for key in sorted(all_keys):
-        values = [(out.get(key), w) for out, w in zip(outputs, weights) if key in out]
+        values = [(out[key], w) for out, w in zip(outputs, weights) if key in out]
         if not values:
             continue
 
@@ -105,9 +105,9 @@ def _merge_fields(outputs: list[dict[str, Any]], weights: list[float]) -> dict[s
         if all(isinstance(v, (int, float)) for v in raw_vals):
             merged[key] = _merge_numeric(raw_vals, val_weights)
         elif all(isinstance(v, str) for v in raw_vals):
-            merged[key] = _merge_categorical(raw_vals)
+            merged[key] = _merge_categorical([str(v) for v in raw_vals])
         elif all(isinstance(v, list) for v in raw_vals):
-            merged[key] = _merge_lists(raw_vals)
+            merged[key] = _merge_lists([list(v) for v in raw_vals])
         else:
             # Mixed types or unsupported — take the most common
             merged[key] = _merge_categorical([str(v) for v in raw_vals])
@@ -119,8 +119,8 @@ def _merge_numeric(values: list[Any], weights: list[float]) -> float:
     """Weighted average of numeric values."""
     total_weight = sum(weights)
     if total_weight == 0:
-        return sum(values) / len(values)
-    return round(sum(v * w for v, w in zip(values, weights)) / total_weight, 4)
+        return float(sum(values) / len(values))
+    return round(float(sum(v * w for v, w in zip(values, weights)) / total_weight), 4)
 
 
 def _merge_categorical(values: list[str]) -> str:

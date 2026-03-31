@@ -9,10 +9,13 @@ Broadside implements the scatter/gather pattern as its core organizing principle
 - Task: a tightly scoped unit of work with a clear output
 - Scatter: fan a task to N parallel agents (performance plateaus beyond 4-5, DeepMind 2025)
 - Gather: collect and normalize outputs
-- Synthesize: collapse N outputs into one — three strategies:
+- Synthesize: collapse N outputs into one — four strategies:
   - `llm` (default): general-purpose, sends all outputs to a model for unified synthesis
   - `consensus`: best for knowledge tasks, extracts agreements and disagreements
   - `voting`: best for reasoning tasks, majority-wins
+  - `weighted_merge`: best for scored/structured outputs, confidence-weighted field merge (zero LLM calls)
+- Structured outputs: pass `output_schema` dict to Task for JSON-structured agent responses
+- Early termination: quality signals (min_complete, agreement_threshold) cancel remaining branches when results converge
 - Budget: per-scatter token limits (scatter/gather multiplies costs ~15x; synthesis adds more)
 
 ## Backends

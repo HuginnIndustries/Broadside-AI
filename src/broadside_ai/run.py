@@ -10,6 +10,7 @@ import time
 from typing import Any
 
 from broadside_ai.budget import ScatterBudget
+from broadside_ai.checkpoints import Checkpoint, CheckpointRejected
 from broadside_ai.gather import gather
 from broadside_ai.quality import EarlyStop
 from broadside_ai.scatter import scatter
@@ -29,6 +30,7 @@ async def run(
     max_tokens: int | None = None,
     parallel: bool | None = None,
     early_stop: EarlyStop | None = None,
+    checkpoint: Checkpoint | None = None,
 ) -> Synthesis:
     """Run a full scatter/gather/synthesize cycle.
 
@@ -47,11 +49,20 @@ async def run(
         max_tokens: Per-scatter token budget. None = unbounded.
         parallel: Run branches concurrently. Defaults to True for cloud
                   backends, False for local (Ollama) to avoid overloading.
+        checkpoint: Optional HITL checkpoint handler. When provided, the
+                    pipeline pauses at each stage for human review.
 
     Returns:
         Synthesis with the final result, raw outputs, and cost data.
+
+    Raises:
+        CheckpointRejected: If a human rejects at any checkpoint.
     """
     budget = ScatterBudget(max_tokens=max_tokens) if max_tokens else None
+
+    # Pre-scatter checkpoint
+    if checkpoint and not await checkpoint.pre_scatter(task, n):
+        raise CheckpointRejected("pre_scatter")
 
     # Scatter
     t0 = time.perf_counter()
@@ -75,11 +86,15 @@ async def run(
         output_schema=task.output_schema,
     )
 
+    # Post-gather checkpoint
+    if checkpoint and not await checkpoint.post_gather(gathered):
+        raise CheckpointRejected("post_gather")
+
     # Synthesize
     syn_backend = synthesis_backend or backend
     syn_bk = backend_kwargs if syn_backend == backend else None
 
-    return await synthesize(
+    result = await synthesize(
         gathered=gathered,
         strategy=synthesis_strategy,
         backend=syn_backend,
@@ -87,6 +102,12 @@ async def run(
         model=synthesis_model,
         output_schema=task.output_schema,
     )
+
+    # Post-synthesis checkpoint
+    if checkpoint and not await checkpoint.post_synthesis(result):
+        raise CheckpointRejected("post_synthesis")
+
+    return result
 
 
 def run_sync(
@@ -101,6 +122,7 @@ def run_sync(
     max_tokens: int | None = None,
     parallel: bool | None = None,
     early_stop: EarlyStop | None = None,
+    checkpoint: Checkpoint | None = None,
 ) -> Synthesis:
     """Synchronous version of run() — no asyncio knowledge needed.
 
@@ -122,5 +144,6 @@ def run_sync(
             max_tokens=max_tokens,
             parallel=parallel,
             early_stop=early_stop,
+            checkpoint=checkpoint,
         )
     )

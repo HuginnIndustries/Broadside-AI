@@ -11,9 +11,10 @@ from __future__ import annotations
 
 import json
 import re
+from typing import Any
 
 
-def try_parse_json(text: str) -> dict | None:
+def try_parse_json(text: str) -> dict[str, Any] | None:
     """Attempt to parse JSON from agent output text.
 
     Returns the parsed dict on success, None on failure. Never raises.
@@ -41,7 +42,7 @@ def try_parse_json(text: str) -> dict | None:
     return None
 
 
-def _try_loads(text: str) -> dict | None:
+def _try_loads(text: str) -> dict[str, Any] | None:
     try:
         parsed = json.loads(text)
         return parsed if isinstance(parsed, dict) else None
@@ -52,14 +53,14 @@ def _try_loads(text: str) -> dict | None:
 _FENCE_RE = re.compile(r"```(?:json)?\s*\n?(.*?)\n?\s*```", re.DOTALL)
 
 
-def _try_fenced(text: str) -> dict | None:
+def _try_fenced(text: str) -> dict[str, Any] | None:
     match = _FENCE_RE.search(text)
     if match:
         return _try_loads(match.group(1).strip())
     return None
 
 
-def _try_extract_object(text: str) -> dict | None:
+def _try_extract_object(text: str) -> dict[str, Any] | None:
     """Find the first { ... } block and try to parse it."""
     start = text.find("{")
     if start == -1:

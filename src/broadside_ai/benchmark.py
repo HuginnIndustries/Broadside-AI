@@ -296,7 +296,7 @@ def _get_system_info() -> dict[str, Any]:
             kernel32.GlobalMemoryStatusEx(ctypes.byref(stat))
             info["ram_gb"] = round(stat.ullTotalPhys / (1024**3), 1)
         else:
-            mem_bytes = os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_PHYS_PAGES")  # type: ignore[attr-defined]
+            mem_bytes = os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_PHYS_PAGES")
             info["ram_gb"] = round(mem_bytes / (1024**3), 1)
     except Exception:
         pass
