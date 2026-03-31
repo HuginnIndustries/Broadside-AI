@@ -36,7 +36,7 @@ Goal: `pip install broadside-ai && python quickstart.py` works on first try, no 
 
 Goal: real numbers that back up the README's claims.
 
-**Status: ~75% complete.** Benchmarks, all 4 synthesis strategies, conflict detection, and structured output schemas are done. Early termination and LangGraph comparison remain.
+**Status: ~90% complete.** Benchmarks, all 4 synthesis strategies, conflict detection, structured output schemas, and early termination are done. Only the LangGraph comparison remains.
 
 - [x] Benchmark harness (latency, token cost, output diversity)
 - [x] Benchmark suite: 3–5 task types (creative, analytical, classification, summarization, code review)
@@ -49,7 +49,7 @@ Goal: real numbers that back up the README's claims.
   - [x] Weighted merge (scored recommendations)
 - [x] Structured output schemas for synthesis (JSON parsing + field-level merging)
 - [x] Conflict detection between scatter outputs
-- [ ] Early termination with quality signals (kill branches that aren't adding value)
+- [x] Early termination with quality signals (kill branches that aren't adding value)
 
 ## Phase 2 — Community (first month)
 
@@ -117,7 +117,7 @@ These items cut across phases and should be addressed before advancing further:
 | Gap | Impact | Effort |
 |---|---|---|
 | ~~No CI pipeline~~ | ✓ Resolved — GitHub Actions on push/PR | — |
-| **Thin test coverage** | 7 test files now (added strategies, conflicts, integration); CLI and backend tests still missing | Medium |
+| **Thin test coverage** | 9 test files now (79 tests); CLI and backend tests still missing | Medium |
 | ~~No strategy tests~~ | ✓ Resolved — consensus, voting, and conflict detection tested | — |
 
 ## Recommended next steps
@@ -145,16 +145,15 @@ Priorities ordered by impact-to-effort ratio.
 
 ### Tier 2 — Phase 1 feature completion
 
-4. **Structured output schemas.** Makes synthesis tractable and is a
-   prerequisite for weighted merge. Define JSON schemas for scatter outputs so
-   strategies can operate on structured data rather than raw text.
+4. ~~**Structured output schemas.**~~ ✓ Done — JSON parsing with three-stage
+   fallback, field-level merging in gather phase.
 
-5. **Weighted merge strategy.** Third synthesis strategy; depends on structured
-   output schemas.
+5. ~~**Weighted merge strategy.**~~ ✓ Done — pure algorithmic merge with
+   confidence-weighted averaging, majority vote for categoricals.
 
-6. **Early termination with quality signals.** Requires defining a quality
-   metric first. Can prototype with simple heuristics (response length,
-   confidence keywords).
+6. ~~**Early termination with quality signals.**~~ ✓ Done — EarlyStop with
+   min_complete and agreement_threshold, asyncio.as_completed for parallel
+   cancellation.
 
 ### Tier 3 — Documentation and visibility
 
@@ -189,4 +188,4 @@ when evaluating feature requests or PRs.
 
 ---
 
-*Last updated: 2026-03-30*
+*Last updated: 2026-03-31*

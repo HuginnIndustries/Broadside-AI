@@ -11,6 +11,7 @@ from typing import Any
 
 from broadside_ai.budget import ScatterBudget
 from broadside_ai.gather import gather
+from broadside_ai.quality import EarlyStop
 from broadside_ai.scatter import scatter
 from broadside_ai.synthesize import Synthesis, synthesize
 from broadside_ai.task import Task
@@ -27,6 +28,7 @@ async def run(
     synthesis_model: str | None = None,
     max_tokens: int | None = None,
     parallel: bool | None = None,
+    early_stop: EarlyStop | None = None,
 ) -> Synthesis:
     """Run a full scatter/gather/synthesize cycle.
 
@@ -61,6 +63,7 @@ async def run(
         agent_kwargs=agent_kwargs,
         budget=budget,
         parallel=parallel,
+        early_stop=early_stop,
     )
     wall_ms = (time.perf_counter() - t0) * 1000
 
@@ -97,6 +100,7 @@ def run_sync(
     synthesis_model: str | None = None,
     max_tokens: int | None = None,
     parallel: bool | None = None,
+    early_stop: EarlyStop | None = None,
 ) -> Synthesis:
     """Synchronous version of run() — no asyncio knowledge needed.
 
@@ -117,5 +121,6 @@ def run_sync(
             synthesis_model=synthesis_model,
             max_tokens=max_tokens,
             parallel=parallel,
+            early_stop=early_stop,
         )
     )
