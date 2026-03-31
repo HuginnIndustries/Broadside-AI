@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Any
 
 from broadside_ai.backends.base import AgentResult
 
@@ -25,21 +26,29 @@ class GatherResult:
     n_completed: int = 0
     n_failed: int = 0
 
+    # Structured output parsing (populated when output_schema is provided)
+    parsed_outputs: list[dict[str, Any] | None] = field(default_factory=list)
+    n_parsed: int = 0
+
     def summary(self) -> dict[str, object]:
         """Quick stats for logging or HITL display."""
-        return {
+        result: dict[str, object] = {
             "completed": self.n_completed,
             "failed": self.n_failed,
             "total_tokens": self.total_tokens,
             "wall_clock_ms": round(self.wall_clock_ms, 1),
             "models_used": list({r.model for r in self.results}),
         }
+        if self.parsed_outputs:
+            result["n_parsed"] = self.n_parsed
+        return result
 
 
 def gather(
     results: list[AgentResult],
     wall_clock_ms: float = 0.0,
     n_requested: int | None = None,
+    output_schema: dict[str, Any] | None = None,
 ) -> GatherResult:
     """Collect scatter outputs into a normalized structure.
 
@@ -47,8 +56,22 @@ def gather(
         results: Completed AgentResults from scatter.
         wall_clock_ms: Actual elapsed wall-clock time for the scatter.
         n_requested: How many branches were requested (to calculate failure count).
+        output_schema: If provided, attempt JSON parsing on each result.
     """
     n_failed = (n_requested - len(results)) if n_requested else 0
+
+    parsed_outputs: list[dict[str, Any] | None] = []
+    n_parsed = 0
+
+    if output_schema is not None:
+        from broadside_ai.parsing import try_parse_json
+
+        for r in results:
+            parsed = try_parse_json(r.text)
+            r.parsed = parsed
+            parsed_outputs.append(parsed)
+            if parsed is not None:
+                n_parsed += 1
 
     return GatherResult(
         results=results,
@@ -58,4 +81,6 @@ def gather(
         texts=[r.text for r in results],
         n_completed=len(results),
         n_failed=max(0, n_failed),
+        parsed_outputs=parsed_outputs,
+        n_parsed=n_parsed,
     )

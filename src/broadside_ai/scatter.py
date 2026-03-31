@@ -9,6 +9,7 @@ from typing import Any
 from broadside_ai.backends import get_backend
 from broadside_ai.backends.base import AgentResult
 from broadside_ai.budget import BudgetExceeded, ScatterBudget
+from broadside_ai.quality import EarlyStop, should_stop
 from broadside_ai.task import Task
 
 logger = logging.getLogger(__name__)
@@ -22,6 +23,7 @@ async def scatter(
     agent_kwargs: dict[str, Any] | None = None,
     budget: ScatterBudget | None = None,
     parallel: bool | None = None,
+    early_stop: EarlyStop | None = None,
 ) -> list[AgentResult]:
     """Run a task across N agents, collect all results.
 
@@ -38,6 +40,9 @@ async def scatter(
                   cloud backends (Anthropic, OpenAI) and False for local
                   backends (Ollama) where concurrent requests can overwhelm
                   the machine.
+        early_stop: Optional quality-based early termination. When set,
+                    completed results are checked against quality signals
+                    and remaining branches are cancelled if signals fire.
 
     Returns:
         List of AgentResult from all completed branches.
@@ -85,17 +90,28 @@ async def scatter(
             last_error = exc
             return None
 
-    if parallel:
-        # Cloud backends: fire all at once
+    if parallel and early_stop is not None:
+        # Early termination path: collect results as they complete
+        completed = await _scatter_with_early_stop(_run_one, n, early_stop)
+    elif parallel:
+        # Standard parallel: fire all at once, wait for all
         results = await asyncio.gather(*[_run_one(i) for i in range(n)])
+        completed = [r for r in results if r is not None]
     else:
-        # Local backends: run one at a time so we don't choke the machine
-        results = []
+        # Sequential: run one at a time
+        completed = []
         for i in range(n):
             result = await _run_one(i)
-            results.append(result)
-
-    completed = [r for r in results if r is not None]
+            if result is not None:
+                completed.append(result)
+                # Check early stop in sequential mode too
+                if early_stop and should_stop(completed, early_stop):
+                    logger.debug(
+                        "Early stop after %d/%d branches (sequential)",
+                        len(completed),
+                        n,
+                    )
+                    break
 
     if not completed:
         hint = f"\n  Last error: {last_error}" if last_error else ""
@@ -103,5 +119,41 @@ async def scatter(
             f"All {n} agents failed. Check that '{backend}' is running "
             f"and the model is available.{hint}"
         )
+
+    return completed
+
+
+async def _scatter_with_early_stop(
+    run_fn: Any,
+    n: int,
+    early_stop: EarlyStop,
+) -> list[AgentResult]:
+    """Run scatter branches with early termination on quality signals."""
+    tasks = [asyncio.ensure_future(run_fn(i)) for i in range(n)]
+    completed: list[AgentResult] = []
+
+    for coro in asyncio.as_completed(tasks):
+        result = await coro
+        if result is not None:
+            completed.append(result)
+            if should_stop(completed, early_stop):
+                # Cancel remaining tasks
+                for t in tasks:
+                    if not t.done():
+                        t.cancel()
+                logger.debug(
+                    "Early stop after %d/%d branches",
+                    len(completed),
+                    n,
+                )
+                break
+
+    # Await cancelled tasks to suppress warnings
+    for t in tasks:
+        if t.cancelled():
+            try:
+                await t
+            except asyncio.CancelledError:
+                pass
 
     return completed

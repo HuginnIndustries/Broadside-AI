@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import Any
 
 
 @dataclass
@@ -16,6 +17,7 @@ class AgentResult:
     latency_ms: float
     model: str
     backend: str
+    parsed: dict[str, Any] | None = field(default=None, repr=False)
 
     @property
     def total_tokens(self) -> int:

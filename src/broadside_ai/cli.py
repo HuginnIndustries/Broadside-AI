@@ -65,6 +65,18 @@ def main() -> None:
 @click.option("--no-save", is_flag=True, help="Don't save results to files.")
 @click.option("--raw", is_flag=True, help="Show raw outputs instead of synthesis.")
 @click.option("--json-output", "json_out", is_flag=True, help="Output as JSON.")
+@click.option(
+    "--early-stop",
+    type=int,
+    default=None,
+    help="Stop after N results arrive (early termination).",
+)
+@click.option(
+    "--agreement",
+    type=float,
+    default=None,
+    help="Stop when this fraction of results agree (0.0-1.0).",
+)
 def run(
     task_file: str | None,
     prompt: str | None,
@@ -78,6 +90,8 @@ def run(
     no_save: bool,
     raw: bool,
     json_out: bool,
+    early_stop: int | None,
+    agreement: float | None,
 ) -> None:
     """Run a scatter/gather cycle on a task."""
     if not task_file and not prompt:
@@ -99,6 +113,13 @@ def run(
     output_dir = Path(output) if output else _OUTPUT_DIR
     save = not no_save
 
+    # Build early stop config
+    es = None
+    if early_stop is not None or agreement is not None:
+        from broadside_ai.quality import EarlyStop
+
+        es = EarlyStop(min_complete=early_stop, agreement_threshold=agreement)
+
     # Run the scatter/gather/synthesize pipeline
     try:
         asyncio.run(
@@ -114,6 +135,7 @@ def run(
                 save,
                 raw,
                 json_out,
+                es,
             )
         )
     except RuntimeError as exc:
@@ -133,6 +155,7 @@ async def _run_pipeline(
     save: bool,
     raw: bool,
     json_out: bool,
+    early_stop: Any | None = None,
 ) -> None:
     """Execute the full pipeline with rich output."""
     import time
@@ -167,6 +190,7 @@ async def _run_pipeline(
             output_dir,
             save,
             raw,
+            early_stop,
         )
 
     # --- Header panel ---
@@ -214,6 +238,12 @@ async def _run_pipeline(
                 except Exception as exc:
                     console.print(f"  [yellow]Agent {i + 1} failed: {exc}[/yellow]")
                 progress.update(ptask, advance=1)
+                if early_stop and results:
+                    from broadside_ai.quality import should_stop
+
+                    if should_stop(results, early_stop):
+                        console.print(f"  [green]Early stop[/green] after {len(results)}/{n}")
+                        break
     else:
         # Parallel: spinner with elapsed time
         progress = Progress(
@@ -231,6 +261,7 @@ async def _run_pipeline(
                 backend_kwargs=backend_kwargs,
                 budget=budget,
                 parallel=True,
+                early_stop=early_stop,
             )
 
     scatter_wall = (time.perf_counter() - scatter_start) * 1000
@@ -251,7 +282,12 @@ async def _run_pipeline(
     )
 
     # Gather
-    gathered = gather(results, wall_clock_ms=scatter_wall, n_requested=n)
+    gathered = gather(
+        results,
+        wall_clock_ms=scatter_wall,
+        n_requested=n,
+        output_schema=task.output_schema,
+    )
 
     if raw:
         _show_raw(gathered.texts, False)
@@ -275,6 +311,7 @@ async def _run_pipeline(
             strategy=strategy,
             backend=backend,
             backend_kwargs=backend_kwargs,
+            output_schema=task.output_schema,
         )
     synth_wall = (time.perf_counter() - synth_start) * 1000
     total_wall = scatter_wall + synth_wall
@@ -303,6 +340,7 @@ async def _run_pipeline_quiet(
     output_dir: Path,
     save: bool,
     raw: bool,
+    early_stop: Any | None = None,
 ) -> None:
     """JSON output mode — no rich display, just data."""
     import time
@@ -315,6 +353,7 @@ async def _run_pipeline_quiet(
         backend_kwargs=backend_kwargs,
         budget=budget,
         parallel=run_parallel,
+        early_stop=early_stop,
     )
     wall_ms = (time.perf_counter() - t0) * 1000
 
@@ -322,7 +361,12 @@ async def _run_pipeline_quiet(
         console.print_json('{"error": "all agents failed"}')
         sys.exit(1)
 
-    gathered = gather(results, wall_clock_ms=wall_ms, n_requested=n)
+    gathered = gather(
+        results,
+        wall_clock_ms=wall_ms,
+        n_requested=n,
+        output_schema=task.output_schema,
+    )
 
     if raw:
         _show_raw(gathered.texts, True)
@@ -336,6 +380,7 @@ async def _run_pipeline_quiet(
         strategy=strategy,
         backend=backend,
         backend_kwargs=backend_kwargs,
+        output_schema=task.output_schema,
     )
     _show_json(result)
     if save:

@@ -33,6 +33,8 @@ def test_render_prompt_with_schema():
     )
     rendered = t.render_prompt()
     assert "Expected Output Format" in rendered
+    assert "valid JSON" in rendered
+    assert '"label"' in rendered  # JSON-formatted, not Python repr
 
 
 def test_task_rejects_extra_fields():

@@ -4,9 +4,10 @@ Living document. Updated as work lands. Phases are sequential but items within
 a phase can land in any order.
 
 > **Project status: v0.1.0 alpha** — Core scatter/gather/synthesize pipeline
-> works across 3 backends (Ollama, Anthropic, OpenAI). Two synthesis strategies
-> (consensus, voting) and conflict detection are implemented. CI and test
-> coverage are the primary gaps.
+> works across 3 backends (Ollama, Anthropic, OpenAI). Four synthesis strategies
+> (LLM, consensus, voting, weighted merge), structured output schemas, early
+> termination, and conflict detection are implemented. Phase 1 (credibility)
+> is complete. Phase 2 (community) and Phase 3 (docs) are next.
 
 ---
 
@@ -36,20 +37,20 @@ Goal: `pip install broadside-ai && python quickstart.py` works on first try, no 
 
 Goal: real numbers that back up the README's claims.
 
-**Status: ~55% complete.** Benchmark harness, results, consensus/voting strategies, and conflict detection are done. Weighted merge, structured output schemas, early termination, and LangGraph comparison remain.
+**Status: Complete.** Benchmarks, all 4 synthesis strategies, conflict detection, structured output schemas, and early termination are done. LangGraph comparison skipped (see below).
 
 - [x] Benchmark harness (latency, token cost, output diversity)
 - [x] Benchmark suite: 3–5 task types (creative, analytical, classification, summarization, code review)
 - [x] Broadside vs. sequential baseline on same tasks (1.75x avg speedup, 2.88x peak)
-- [ ] Broadside vs. LangGraph fan-out on same tasks (if feasible without misrepresenting)
+- [x] ~~Broadside vs. LangGraph fan-out on same tasks~~ — N/A: LangGraph is a general DAG engine; comparing it to a single-pattern tool would be misleading
 - [x] Published benchmark results in `benchmarks/results/` with reproduction instructions
 - [x] Synthesis strategies beyond basic LLM aggregation:
   - [x] Consensus (best for knowledge tasks — ACL 2025 Kaesberg et al.)
   - [x] Voting (best for reasoning tasks)
-  - [ ] Weighted merge (scored recommendations)
-- [ ] Structured output schemas for synthesis (make merging tractable)
+  - [x] Weighted merge (scored recommendations)
+- [x] Structured output schemas for synthesis (JSON parsing + field-level merging)
 - [x] Conflict detection between scatter outputs
-- [ ] Early termination with quality signals (kill branches that aren't adding value)
+- [x] Early termination with quality signals (kill branches that aren't adding value)
 
 ## Phase 2 — Community (first month)
 
@@ -117,7 +118,7 @@ These items cut across phases and should be addressed before advancing further:
 | Gap | Impact | Effort |
 |---|---|---|
 | ~~No CI pipeline~~ | ✓ Resolved — GitHub Actions on push/PR | — |
-| **Thin test coverage** | 7 test files now (added strategies, conflicts, integration); CLI and backend tests still missing | Medium |
+| **Thin test coverage** | 9 test files now (79 tests); CLI and backend tests still missing | Medium |
 | ~~No strategy tests~~ | ✓ Resolved — consensus, voting, and conflict detection tested | — |
 
 ## Recommended next steps
@@ -145,16 +146,15 @@ Priorities ordered by impact-to-effort ratio.
 
 ### Tier 2 — Phase 1 feature completion
 
-4. **Structured output schemas.** Makes synthesis tractable and is a
-   prerequisite for weighted merge. Define JSON schemas for scatter outputs so
-   strategies can operate on structured data rather than raw text.
+4. ~~**Structured output schemas.**~~ ✓ Done — JSON parsing with three-stage
+   fallback, field-level merging in gather phase.
 
-5. **Weighted merge strategy.** Third synthesis strategy; depends on structured
-   output schemas.
+5. ~~**Weighted merge strategy.**~~ ✓ Done — pure algorithmic merge with
+   confidence-weighted averaging, majority vote for categoricals.
 
-6. **Early termination with quality signals.** Requires defining a quality
-   metric first. Can prototype with simple heuristics (response length,
-   confidence keywords).
+6. ~~**Early termination with quality signals.**~~ ✓ Done — EarlyStop with
+   min_complete and agreement_threshold, asyncio.as_completed for parallel
+   cancellation.
 
 ### Tier 3 — Documentation and visibility
 
@@ -189,4 +189,4 @@ when evaluating feature requests or PRs.
 
 ---
 
-*Last updated: 2026-03-30*
+*Last updated: 2026-03-31*

@@ -1,7 +1,11 @@
 """Integration tests — full scatter/gather/synthesize with mock backend."""
 
+import json
+
 import pytest
 
+from broadside_ai.backends import register
+from broadside_ai.backends.base import AgentResult, Backend
 from broadside_ai.gather import gather
 from broadside_ai.scatter import scatter
 from broadside_ai.synthesize import Synthesis, synthesize
@@ -100,3 +104,81 @@ async def test_scatter_with_budget():
     results = await scatter(task, n=3, backend="mock", budget=budget)
     assert len(results) == 3
     assert budget.used > 0
+
+
+class JsonMockBackend(Backend):
+    """Mock backend that returns JSON responses for structured output testing."""
+
+    def __init__(self, **kwargs: object) -> None:
+        self._call_count = 0
+        self._responses = [
+            {"label": "spam", "confidence": 0.9, "score": 8},
+            {"label": "spam", "confidence": 0.7, "score": 7},
+            {"label": "ham", "confidence": 0.3, "score": 5},
+        ]
+
+    async def complete(self, prompt: str, **kwargs: object) -> AgentResult:
+        data = self._responses[self._call_count % len(self._responses)]
+        self._call_count += 1
+        return AgentResult(
+            text=json.dumps(data),
+            tokens_in=10,
+            tokens_out=20,
+            latency_ms=5.0,
+            model="json-mock",
+            backend="json-mock",
+        )
+
+    def name(self) -> str:
+        return "json-mock"
+
+
+register("json-mock", JsonMockBackend)
+
+
+@pytest.mark.asyncio
+async def test_full_pipeline_weighted_merge():
+    """End-to-end with weighted_merge strategy and structured outputs."""
+    task = Task(
+        prompt="Classify this email",
+        output_schema={"label": "string", "confidence": "float", "score": "int"},
+    )
+    results = await scatter(task, n=3, backend="json-mock", parallel=True)
+    gathered = gather(
+        results,
+        wall_clock_ms=50.0,
+        n_requested=3,
+        output_schema=task.output_schema,
+    )
+    assert gathered.n_parsed == 3
+
+    synthesis = await synthesize(
+        gathered,
+        strategy="weighted_merge",
+        backend="mock",
+        output_schema=task.output_schema,
+    )
+    assert synthesis.strategy == "weighted_merge"
+    assert synthesis.parsed_result is not None
+    assert synthesis.parsed_result["label"] == "spam"  # majority
+    assert synthesis.synthesis_tokens == 0  # no LLM calls
+
+
+@pytest.mark.asyncio
+async def test_structured_output_with_llm_strategy():
+    """LLM strategy still works when structured outputs are available."""
+    task = Task(
+        prompt="Classify this",
+        output_schema={"label": "string"},
+    )
+    results = await scatter(task, n=2, backend="json-mock", parallel=True)
+    gathered = gather(
+        results,
+        wall_clock_ms=50.0,
+        n_requested=2,
+        output_schema=task.output_schema,
+    )
+    assert gathered.n_parsed == 2
+    # LLM strategy ignores parsed outputs, still works
+    synthesis = await synthesize(gathered, strategy="llm", backend="mock")
+    assert synthesis.strategy == "llm"
