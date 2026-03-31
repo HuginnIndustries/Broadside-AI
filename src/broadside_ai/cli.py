@@ -233,8 +233,8 @@ async def _run_pipeline(
             for i in range(n):
                 progress.update(ptask, description=f"Agent {i + 1}/{n} thinking")
                 try:
-                    result = await llm.complete(prompt)
-                    results.append(result)
+                    agent_result = await llm.complete(prompt)
+                    results.append(agent_result)
                 except Exception as exc:
                     console.print(f"  [yellow]Agent {i + 1} failed: {exc}[/yellow]")
                 progress.update(ptask, advance=1)

@@ -93,7 +93,7 @@ def _check_agreement(results: list[AgentResult], threshold: float) -> bool:
     return most_common_count / n >= threshold
 
 
-def _dict_signature(d: dict) -> str:
+def _dict_signature(d: dict[str, object]) -> str:
     """Create a canonical string from a dict for comparison.
 
     Ignores 'confidence' fields since those are expected to vary.
