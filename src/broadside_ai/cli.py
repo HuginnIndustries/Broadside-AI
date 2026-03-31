@@ -251,7 +251,12 @@ async def _run_pipeline(
     )
 
     # Gather
-    gathered = gather(results, wall_clock_ms=scatter_wall, n_requested=n)
+    gathered = gather(
+        results,
+        wall_clock_ms=scatter_wall,
+        n_requested=n,
+        output_schema=task.output_schema,
+    )
 
     if raw:
         _show_raw(gathered.texts, False)
@@ -275,6 +280,7 @@ async def _run_pipeline(
             strategy=strategy,
             backend=backend,
             backend_kwargs=backend_kwargs,
+            output_schema=task.output_schema,
         )
     synth_wall = (time.perf_counter() - synth_start) * 1000
     total_wall = scatter_wall + synth_wall
@@ -322,7 +328,12 @@ async def _run_pipeline_quiet(
         console.print_json('{"error": "all agents failed"}')
         sys.exit(1)
 
-    gathered = gather(results, wall_clock_ms=wall_ms, n_requested=n)
+    gathered = gather(
+        results,
+        wall_clock_ms=wall_ms,
+        n_requested=n,
+        output_schema=task.output_schema,
+    )
 
     if raw:
         _show_raw(gathered.texts, True)
@@ -336,6 +347,7 @@ async def _run_pipeline_quiet(
         strategy=strategy,
         backend=backend,
         backend_kwargs=backend_kwargs,
+        output_schema=task.output_schema,
     )
     _show_json(result)
     if save:

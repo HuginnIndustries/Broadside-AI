@@ -33,6 +33,9 @@ class Synthesis:
     # Tokens consumed by the synthesis step itself
     synthesis_tokens: int = 0
 
+    # Structured synthesis output (populated by strategies that produce structured data)
+    parsed_result: dict[str, Any] | None = None
+
     def total_tokens(self) -> int:
         """Total cost: scatter + synthesis."""
         return self.gather.total_tokens + self.synthesis_tokens
@@ -44,6 +47,7 @@ async def synthesize(
     backend: str = "ollama",
     backend_kwargs: dict[str, Any] | None = None,
     model: str | None = None,
+    output_schema: dict[str, Any] | None = None,
 ) -> Synthesis:
     """Synthesize gathered results into a single output.
 
@@ -65,9 +69,20 @@ async def synthesize(
         from broadside_ai.strategies.voting import synthesize_voting
 
         return await synthesize_voting(gathered, backend, backend_kwargs, model)
+    elif strategy == "weighted_merge":
+        from broadside_ai.strategies.weighted_merge import synthesize_weighted_merge
+
+        return await synthesize_weighted_merge(
+            gathered,
+            output_schema=output_schema,
+            backend=backend,
+            backend_kwargs=backend_kwargs,
+            model=model,
+        )
     else:
         raise ValueError(
-            f"Unknown synthesis strategy '{strategy}'. Available: 'llm', 'consensus', 'voting'."
+            f"Unknown synthesis strategy '{strategy}'. "
+            f"Available: 'llm', 'consensus', 'voting', 'weighted_merge'."
         )
 
 

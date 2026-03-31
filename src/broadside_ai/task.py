@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -40,5 +41,9 @@ class Task(BaseModel):
                 parts.append(f"{key}: {value}")
         if self.output_schema:
             parts.append("\n--- Expected Output Format ---")
-            parts.append(str(self.output_schema))
+            parts.append(
+                "Respond with valid JSON matching this schema. "
+                "Do not include any text outside the JSON object."
+            )
+            parts.append(json.dumps(self.output_schema, indent=2))
         return "\n".join(parts)

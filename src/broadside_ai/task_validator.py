@@ -13,7 +13,7 @@ import yaml
 from broadside_ai.task import Task
 
 VALID_CATEGORIES = {"creative", "analytical", "classification", "summarization", "code_review"}
-VALID_STRATEGIES = {"llm", "consensus", "voting"}
+VALID_STRATEGIES = {"llm", "consensus", "voting", "weighted_merge"}
 
 
 def validate_task_file(path: str) -> list[str]:

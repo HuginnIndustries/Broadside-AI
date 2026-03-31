@@ -65,7 +65,12 @@ async def run(
     wall_ms = (time.perf_counter() - t0) * 1000
 
     # Gather
-    gathered = gather(results, wall_clock_ms=wall_ms, n_requested=n)
+    gathered = gather(
+        results,
+        wall_clock_ms=wall_ms,
+        n_requested=n,
+        output_schema=task.output_schema,
+    )
 
     # Synthesize
     syn_backend = synthesis_backend or backend
@@ -77,6 +82,7 @@ async def run(
         backend=syn_backend,
         backend_kwargs=syn_bk,
         model=synthesis_model,
+        output_schema=task.output_schema,
     )
 
 
