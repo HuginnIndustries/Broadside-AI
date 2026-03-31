@@ -36,7 +36,7 @@ Goal: `pip install broadside-ai && python quickstart.py` works on first try, no 
 
 Goal: real numbers that back up the README's claims.
 
-**Status: ~55% complete.** Benchmark harness, results, consensus/voting strategies, and conflict detection are done. Weighted merge, structured output schemas, early termination, and LangGraph comparison remain.
+**Status: ~75% complete.** Benchmarks, all 4 synthesis strategies, conflict detection, and structured output schemas are done. Early termination and LangGraph comparison remain.
 
 - [x] Benchmark harness (latency, token cost, output diversity)
 - [x] Benchmark suite: 3–5 task types (creative, analytical, classification, summarization, code review)
@@ -46,8 +46,8 @@ Goal: real numbers that back up the README's claims.
 - [x] Synthesis strategies beyond basic LLM aggregation:
   - [x] Consensus (best for knowledge tasks — ACL 2025 Kaesberg et al.)
   - [x] Voting (best for reasoning tasks)
-  - [ ] Weighted merge (scored recommendations)
-- [ ] Structured output schemas for synthesis (make merging tractable)
+  - [x] Weighted merge (scored recommendations)
+- [x] Structured output schemas for synthesis (JSON parsing + field-level merging)
 - [x] Conflict detection between scatter outputs
 - [ ] Early termination with quality signals (kill branches that aren't adding value)
 
