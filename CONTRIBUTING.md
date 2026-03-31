@@ -13,7 +13,7 @@ pip install -e ".[dev]"
 make test
 ```
 
-All 12 tests should pass. If they don't, open an issue.
+All tests should pass. If they don't, open an issue.
 
 ## Ways to Contribute
 
@@ -36,9 +36,8 @@ python -m broadside_ai.task_validator tasks/my_task.yaml
 New ways to collapse N outputs into one. Look at
 `src/broadside_ai/strategies/consensus.py` for the pattern. Ideas:
 
-- Weighted merge (scored recommendations)
-- Structured extraction (pull specific fields from each output)
 - Embedding-based clustering (group similar outputs, pick representative)
+- Chain-of-thought synthesis (multi-step reasoning across outputs)
 
 Open an issue first to discuss the approach.
 

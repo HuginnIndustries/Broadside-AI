@@ -77,6 +77,11 @@ def main() -> None:
     default=None,
     help="Stop when this fraction of results agree (0.0-1.0).",
 )
+@click.option(
+    "--checkpoint",
+    is_flag=True,
+    help="Enable interactive checkpoints (pause for human review at each stage).",
+)
 def run(
     task_file: str | None,
     prompt: str | None,
@@ -92,6 +97,7 @@ def run(
     json_out: bool,
     early_stop: int | None,
     agreement: float | None,
+    checkpoint: bool,
 ) -> None:
     """Run a scatter/gather cycle on a task."""
     if not task_file and not prompt:
@@ -120,6 +126,13 @@ def run(
 
         es = EarlyStop(min_complete=early_stop, agreement_threshold=agreement)
 
+    # Build checkpoint
+    cp = None
+    if checkpoint:
+        from broadside_ai.checkpoints import TerminalCheckpoint
+
+        cp = TerminalCheckpoint()
+
     # Run the scatter/gather/synthesize pipeline
     try:
         asyncio.run(
@@ -136,6 +149,7 @@ def run(
                 raw,
                 json_out,
                 es,
+                cp,
             )
         )
     except RuntimeError as exc:
@@ -156,6 +170,7 @@ async def _run_pipeline(
     raw: bool,
     json_out: bool,
     early_stop: Any | None = None,
+    checkpoint: Any | None = None,
 ) -> None:
     """Execute the full pipeline with rich output."""
     import time
@@ -209,6 +224,11 @@ async def _run_pipeline(
         )
     )
     console.print()
+
+    # --- Pre-scatter checkpoint ---
+    if checkpoint and not await checkpoint.pre_scatter(task, n):
+        console.print("[yellow]Scatter rejected at checkpoint.[/yellow]")
+        return
 
     # --- Scatter phase with live progress ---
     scatter_start = time.perf_counter()
@@ -296,6 +316,11 @@ async def _run_pipeline(
             _save_raw(gathered.texts, task, output_dir, model_hint=model_hint)
         return
 
+    # --- Post-gather checkpoint ---
+    if checkpoint and not await checkpoint.post_gather(gathered):
+        console.print("[yellow]Synthesis rejected at checkpoint.[/yellow]")
+        return
+
     # --- Synthesis phase ---
     synth_start = time.perf_counter()
     progress = Progress(
@@ -321,6 +346,11 @@ async def _run_pipeline(
         f"[dim]({result.synthesis_tokens:,} tokens, {synth_wall / 1000:.1f}s)[/dim]"
     )
     console.print()
+
+    # --- Post-synthesis checkpoint ---
+    if checkpoint and not await checkpoint.post_synthesis(result):
+        console.print("[yellow]Result rejected at checkpoint.[/yellow]")
+        return
 
     # --- Results ---
     _show_rich(result, total_wall)

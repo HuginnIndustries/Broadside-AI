@@ -77,19 +77,42 @@ Results are saved to `broadside_ai_output/` organized by model and topic for eas
 
 ## Synthesis Strategies
 
-Broadside ships with three strategies for collapsing N outputs into one:
+Broadside ships with four strategies for collapsing N outputs into one:
 
-| Strategy        | Best for        | How it works                                                                                        |
-| --------------- | --------------- | --------------------------------------------------------------------------------------------------- |
-| `llm` (default) | General tasks   | Sends all outputs to a model that identifies consensus, flags outliers, and writes a unified answer |
-| `consensus`     | Knowledge tasks | Extracts agreed-upon claims, disagreements, and unique insights                                     |
-| `voting`        | Reasoning tasks | Each output votes on an answer; majority wins                                                       |
+| Strategy         | Best for           | How it works                                                                                        |
+| ---------------- | ------------------ | --------------------------------------------------------------------------------------------------- |
+| `llm` (default)  | General tasks      | Sends all outputs to a model that identifies consensus, flags outliers, and writes a unified answer |
+| `consensus`      | Knowledge tasks    | Extracts agreed-upon claims, disagreements, and unique insights                                     |
+| `voting`         | Reasoning tasks    | Each output votes on an answer; majority wins                                                       |
+| `weighted_merge` | Scored/structured  | Confidence-weighted field merge — zero LLM calls on happy path                                     |
 
-Note: the default `llm` strategy calls the model one additional time for synthesis. In practice, synthesis can use as many tokens as the scatter itself. For cost-sensitive workloads, `consensus` or `voting` are lighter alternatives.
+Note: the default `llm` strategy calls the model one additional time for synthesis, which can use as many tokens as the scatter itself. `consensus` and `voting` are lighter alternatives. `weighted_merge` uses no LLM calls at all — it merges structured fields algorithmically.
 
 ```bash
 python -m broadside_ai run --prompt "Your task" --n 3 --synthesis voting
 ```
+
+### Structured Outputs
+
+Pass an `output_schema` to get structured JSON from each agent. Works with any strategy but pairs best with `weighted_merge`:
+
+```python
+task = Task(
+    prompt="Classify this support ticket",
+    output_schema={"label": "string", "confidence": "float", "reasoning": "string"},
+)
+result = run_sync(task, n=3, backend="ollama", strategy="weighted_merge")
+```
+
+### Early Termination
+
+Stop scattering early when enough agents agree — saves time and tokens:
+
+```bash
+python -m broadside_ai run --prompt "Your task" --n 5 --early-stop 3 --agreement 0.66
+```
+
+`--early-stop 3` requires at least 3 results before checking. `--agreement 0.66` stops when 66%+ of results match.
 
 ## Backends
 
