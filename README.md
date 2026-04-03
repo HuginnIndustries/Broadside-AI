@@ -82,9 +82,9 @@ python3 -m pip install .
 To install backend extras from the repo checkout, use:
 
 ```powershell
-py -3 -m pip install '.[anthropic]'
-py -3 -m pip install '.[openai]'
-py -3 -m pip install '.[all]'
+py -3 -m pip install ".[anthropic]"
+py -3 -m pip install ".[openai]"
+py -3 -m pip install ".[all]"
 ```
 
 ## Quick start
