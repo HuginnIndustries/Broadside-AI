@@ -32,12 +32,23 @@ Committed benchmark snapshots in `benchmarks/results/` currently show:
 
 ## Install
 
+Broadside-AI gives you two equivalent ways to run it:
+
+- `broadside-ai ...`
+- `py -3 -m broadside_ai ...`
+
+If you are on Windows and the `broadside-ai` command is not recognized, use the
+`py -3 -m broadside_ai ...` form. It works even when the user Scripts
+directory is not on `PATH`.
+
+On macOS or Linux, replace `py -3` with `python3` in the commands below.
+
 ### From PyPI
 
 After the first public PyPI release:
 
 ```bash
-pip install broadside-ai
+py -3 -m pip install broadside-ai
 ```
 
 Recommended for CLI users:
@@ -49,9 +60,9 @@ pipx install broadside-ai
 Optional extras:
 
 ```bash
-pip install broadside-ai[anthropic]
-pip install broadside-ai[openai]
-pip install broadside-ai[all]
+py -3 -m pip install "broadside-ai[anthropic]"
+py -3 -m pip install "broadside-ai[openai]"
+py -3 -m pip install "broadside-ai[all]"
 ```
 
 ### From a downloaded ZIP or cloned repo
@@ -87,7 +98,70 @@ py -3 -m pip install ".[openai]"
 py -3 -m pip install ".[all]"
 ```
 
+### First success on Windows
+
+If you want the most reliable first-run path on Windows, use this sequence:
+
+1. Install the package from the repo or from PyPI.
+2. Verify the module entrypoint works:
+
+```cmd
+py -3 -m broadside_ai --help
+```
+
+3. If `broadside-ai --help` also works, you can use either form.
+4. If `broadside-ai` is not recognized, keep using `py -3 -m broadside_ai ...`
+   or install with `pipx` so the command is added to a CLI-friendly location.
+
 ## Quick start
+
+### Guided tour
+
+Broadside-AI needs a real backend before `run` can do useful work. The easiest
+way to avoid a frustrating first try is:
+
+1. Confirm the install worked.
+2. Set up one backend.
+3. Run a single prompt.
+
+#### Step 1: Confirm the install worked
+
+Start here:
+
+```cmd
+py -3 -m broadside_ai --help
+```
+
+If you want to try the console-script form too:
+
+```cmd
+broadside-ai --help
+```
+
+If that second command says `'broadside-ai' is not recognized`, nothing is
+wrong with Broadside-AI itself. It just means the script location is not on
+your `PATH` yet. Use `py -3 -m broadside_ai ...` and keep going.
+
+#### Step 2: Pick one backend
+
+Broadside-AI supports Ollama, Anthropic, and OpenAI-compatible APIs. For a
+first run, Ollama local is the least setup-heavy option.
+
+#### Step 3: Run your first prompt with Ollama local
+
+Install Ollama, then pull a local model:
+
+```cmd
+ollama pull gemma3:1b
+```
+
+Now run Broadside-AI:
+
+```cmd
+py -3 -m broadside_ai run --prompt "Write a pitch for a dotfile manager" --n 3 --model gemma3:1b
+```
+
+That should print one synthesized result to stdout.
 
 ### Plain CLI output
 
@@ -95,8 +169,9 @@ py -3 -m pip install ".[all]"
 easy to compose with other tools:
 
 ```bash
-broadside-ai run --prompt "Write a pitch for a dotfile manager" --n 3
 python -m broadside_ai run --prompt "Summarize this changelog" --n 3 > summary.txt
+py -3 -m broadside_ai run --prompt "Write a pitch for a dotfile manager" --n 3 --model gemma3:1b
+broadside-ai run --prompt "Write a pitch for a dotfile manager" --n 3 --model gemma3:1b
 ```
 
 Files are written only when you ask for them with `--save` or `--output`.
@@ -108,7 +183,7 @@ Install Ollama, sign in, and pull the default cloud model:
 ```bash
 ollama signin
 ollama pull nemotron-3-super:cloud
-broadside-ai run --prompt "Write a pitch for a dotfile manager" --n 3
+py -3 -m broadside_ai run --prompt "Write a pitch for a dotfile manager" --n 3
 ```
 
 Execution defaults are tuned for user success:
@@ -122,23 +197,25 @@ Override with `--parallel` or `--sequential` when needed.
 
 ```bash
 ollama pull gemma3:1b
-broadside-ai run --prompt "Write a pitch for a dotfile manager" --n 3 --model gemma3:1b
+py -3 -m broadside_ai run --prompt "Write a pitch for a dotfile manager" --n 3 --model gemma3:1b
 ```
 
 ### Anthropic
 
+Set `ANTHROPIC_API_KEY` in your shell first, then run:
+
 ```bash
-pip install broadside-ai[anthropic]
-export ANTHROPIC_API_KEY=your-key-here
-broadside-ai run --prompt "Review this design" --n 3 --backend anthropic
+py -3 -m pip install "broadside-ai[anthropic]"
+py -3 -m broadside_ai run --prompt "Review this design" --n 3 --backend anthropic
 ```
 
 ### OpenAI-compatible APIs
 
+Set `OPENAI_API_KEY` in your shell first, then run:
+
 ```bash
-pip install broadside-ai[openai]
-export OPENAI_API_KEY=your-key-here
-broadside-ai run --prompt "Compare these options" --n 3 --backend openai
+py -3 -m pip install "broadside-ai[openai]"
+py -3 -m broadside_ai run --prompt "Compare these options" --n 3 --backend openai
 ```
 
 For OpenAI-compatible providers, set `OPENAI_BASE_URL` and pass `--model`.
@@ -150,7 +227,7 @@ For OpenAI-compatible providers, set `OPENAI_BASE_URL` and pass `--model`.
 Use `--json-output` for scripts and subprocess integrations:
 
 ```bash
-broadside-ai run tasks/ticket_classification.yaml --n 5 --synthesis weighted_merge --json-output
+py -3 -m broadside_ai run tasks/ticket_classification.yaml --n 5 --synthesis weighted_merge --json-output
 ```
 
 The JSON payload always includes:
@@ -177,8 +254,8 @@ The JSON payload always includes:
 ### Save artifacts when you want them
 
 ```bash
-broadside-ai run tasks/code_review.yaml --n 3 --save
-broadside-ai run tasks/code_review.yaml --n 3 --output artifacts/review-run
+py -3 -m broadside_ai run tasks/code_review.yaml --n 3 --save
+py -3 -m broadside_ai run tasks/code_review.yaml --n 3 --output artifacts/review-run
 ```
 
 Saved runs go under:
@@ -190,8 +267,8 @@ broadside_ai_output/{model}/{topic}_{timestamp}/
 ### Validate task files
 
 ```bash
+py -3 -m broadside_ai validate-task tasks/ticket_classification.yaml
 broadside-ai validate-task tasks/ticket_classification.yaml
-python -m broadside_ai validate-task tasks/ticket_classification.yaml
 ```
 
 Validation exits `0` when every file is valid and `1` when any file fails.
@@ -212,7 +289,7 @@ That enables `weighted_merge`, an algorithmic synthesis strategy that:
 Example:
 
 ```bash
-broadside-ai run tasks/ticket_classification.yaml --n 5 --synthesis weighted_merge --json-output
+py -3 -m broadside_ai run tasks/ticket_classification.yaml --n 5 --synthesis weighted_merge --json-output
 ```
 
 You can also stop early when enough branches have arrived or agreed:
