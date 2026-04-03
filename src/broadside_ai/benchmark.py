@@ -253,7 +253,10 @@ def _get_system_info() -> dict[str, Any]:
         if platform.system() == "Windows":
             import ctypes
 
-            kernel32 = ctypes.windll.kernel32
+            windll = getattr(ctypes, "windll", None)
+            if windll is None:
+                return info
+            kernel32 = windll.kernel32
 
             class MEMORYSTATUSEX(ctypes.Structure):
                 _fields_ = [
@@ -273,7 +276,10 @@ def _get_system_info() -> dict[str, Any]:
             kernel32.GlobalMemoryStatusEx(ctypes.byref(stat))
             info["ram_gb"] = round(stat.ullTotalPhys / (1024**3), 1)
         else:
-            mem_bytes = os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_PHYS_PAGES")  # type: ignore[attr-defined]
+            sysconf = getattr(os, "sysconf", None)
+            if sysconf is None:
+                return info
+            mem_bytes = sysconf("SC_PAGE_SIZE") * sysconf("SC_PHYS_PAGES")
             info["ram_gb"] = round(mem_bytes / (1024**3), 1)
     except Exception:
         pass
