@@ -1,4 +1,4 @@
-"""Abstract backend interface — what every LLM provider must implement."""
+"""Abstract backend interface - what every LLM provider must implement."""
 
 from __future__ import annotations
 
@@ -27,7 +27,7 @@ class AgentResult:
 class Backend(ABC):
     """Interface for LLM backends.
 
-    Each backend wraps a single provider's API. Backends are stateless —
+    Each backend wraps a single provider's API. Backends are stateless -
     all config is passed at init, all calls are independent.
     """
 

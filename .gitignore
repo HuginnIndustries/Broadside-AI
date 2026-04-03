@@ -9,7 +9,12 @@ build/
 .mypy_cache/
 .ruff_cache/
 .pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
 *.so
 .env
 .venv/
 venv/
+broadside_ai_output/
+pytest-cache-files-*/

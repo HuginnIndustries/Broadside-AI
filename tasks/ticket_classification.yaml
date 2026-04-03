@@ -17,5 +17,5 @@ meta:
   name: "ticket_classification"
   category: "classification"
   recommended_n: 5
-  recommended_strategy: "voting"
-  description: "Discrete classification where voting produces the most reliable label."
+  recommended_strategy: "weighted_merge"
+  description: "Structured classification where confidence-weighted merging produces a stable label."

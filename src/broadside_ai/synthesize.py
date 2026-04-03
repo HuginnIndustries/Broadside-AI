@@ -1,14 +1,4 @@
-"""Synthesize — collapse N scatter outputs into a single actionable result.
-
-Aggregation is the hard problem, not scatter. This module provides synthesis
-strategies that match the research:
-- Consensus: best for knowledge tasks (ACL 2025, Kaesberg et al.)
-- Voting: best for reasoning/classification tasks
-- LLM: a model reads all outputs and produces a synthesis
-
-The default is LLM synthesis — it's the most general.
-Consensus and voting are available for task-appropriate use.
-"""
+"""Synthesize - collapse N scatter outputs into a single actionable result."""
 
 from __future__ import annotations
 
@@ -26,18 +16,12 @@ class Synthesis:
     result: str
     strategy: str
     gather: GatherResult
-
-    # For transparency — show what the synthesizer saw
     raw_outputs: list[str] = field(default_factory=list)
-
-    # Tokens consumed by the synthesis step itself
     synthesis_tokens: int = 0
-
-    # Structured synthesis output (populated by strategies that produce structured data)
     parsed_result: dict[str, Any] | None = None
+    requested_strategy: str = "llm"
 
     def total_tokens(self) -> int:
-        """Total cost: scatter + synthesis."""
         return self.gather.total_tokens + self.synthesis_tokens
 
 
@@ -49,27 +33,18 @@ async def synthesize(
     model: str | None = None,
     output_schema: dict[str, Any] | None = None,
 ) -> Synthesis:
-    """Synthesize gathered results into a single output.
-
-    Args:
-        gathered: The GatherResult from the scatter phase.
-        strategy: Synthesis strategy. Currently supported: "llm".
-        backend: Which backend to use for LLM synthesis.
-        backend_kwargs: Passed to the backend constructor.
-        model: Override model for synthesis (often you want a stronger
-               model here than in the scatter phase).
-    """
+    """Synthesize gathered results into a single output."""
     if strategy == "llm":
         return await _synthesize_llm(gathered, backend, backend_kwargs, model)
-    elif strategy == "consensus":
+    if strategy == "consensus":
         from broadside_ai.strategies.consensus import synthesize_consensus
 
         return await synthesize_consensus(gathered, backend, backend_kwargs, model)
-    elif strategy == "voting":
+    if strategy == "voting":
         from broadside_ai.strategies.voting import synthesize_voting
 
         return await synthesize_voting(gathered, backend, backend_kwargs, model)
-    elif strategy == "weighted_merge":
+    if strategy == "weighted_merge":
         from broadside_ai.strategies.weighted_merge import synthesize_weighted_merge
 
         return await synthesize_weighted_merge(
@@ -79,11 +54,10 @@ async def synthesize(
             backend_kwargs=backend_kwargs,
             model=model,
         )
-    else:
-        raise ValueError(
-            f"Unknown synthesis strategy '{strategy}'. "
-            f"Available: 'llm', 'consensus', 'voting', 'weighted_merge'."
-        )
+    raise ValueError(
+        f"Unknown synthesis strategy '{strategy}'. "
+        "Available: 'llm', 'consensus', 'voting', 'weighted_merge'."
+    )
 
 
 async def _synthesize_llm(
@@ -93,22 +67,19 @@ async def _synthesize_llm(
     model: str | None,
 ) -> Synthesis:
     """Use an LLM to read all outputs and produce a synthesis."""
-    bk = backend_kwargs or {}
+    bk = dict(backend_kwargs or {})
     if model:
         bk["model"] = model
 
     llm = get_backend(backend, **bk)
-
-    # Build the synthesis prompt — show the LLM all scatter outputs
     numbered = "\n\n".join(
         f"--- Output {i + 1} ---\n{text}" for i, text in enumerate(gathered.texts)
     )
-
     prompt = (
         "You are synthesizing the outputs of multiple independent agents who "
         "were given the same task. Your job:\n"
-        "1. Identify the consensus — what do most outputs agree on?\n"
-        "2. Flag meaningful outliers — where did outputs diverge significantly?\n"
+        "1. Identify the consensus - what do most outputs agree on?\n"
+        "2. Flag meaningful outliers - where did outputs diverge significantly?\n"
         "3. Produce a single, clear synthesis that captures the best signal "
         "from all outputs.\n"
         "4. If outputs contradict each other on facts, flag the contradiction "
@@ -119,11 +90,11 @@ async def _synthesize_llm(
     )
 
     result = await llm.complete(prompt)
-
     return Synthesis(
         result=result.text,
         strategy="llm",
         gather=gathered,
         raw_outputs=gathered.texts,
         synthesis_tokens=result.total_tokens,
+        requested_strategy="llm",
     )

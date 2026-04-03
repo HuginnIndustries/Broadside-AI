@@ -1,4 +1,4 @@
-"""Backend registry — pluggable LLM providers."""
+"""Backend registry - pluggable LLM providers."""
 
 from __future__ import annotations
 
@@ -15,13 +15,8 @@ def register(name: str, cls: type[Backend]) -> None:
 
 
 def get_backend(name: str, **kwargs: object) -> Backend:
-    """Look up a backend by name, instantiate with kwargs.
-
-    Backends that require optional dependencies (anthropic, openai) raise
-    a clear ImportError if the extra isn't installed.
-    """
+    """Look up a backend by name and instantiate it."""
     if name not in _REGISTRY:
-        # Lazy-load built-in backends on first access
         _try_load_builtin(name)
 
     if name not in _REGISTRY:
@@ -34,7 +29,6 @@ def get_backend(name: str, **kwargs: object) -> Backend:
 
 
 def _try_load_builtin(name: str) -> None:
-    """Attempt to import a built-in backend module to trigger registration."""
     builtins = {
         "ollama": "broadside_ai.backends.ollama",
         "anthropic": "broadside_ai.backends.anthropic",

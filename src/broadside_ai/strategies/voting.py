@@ -1,4 +1,4 @@
-"""Voting synthesis — best for reasoning and classification tasks.
+"""Voting synthesis - best for reasoning and classification tasks.
 
 When agents are choosing from discrete options (labels, yes/no, rankings),
 voting gives you a principled way to aggregate. Majority vote is the simplest
@@ -31,12 +31,9 @@ async def synthesize_voting(
 
     Two modes:
     1. extract_labels=True (default): Use an LLM to extract the core
-       answer/label from each output, then vote on those.
+       answer or label from each output, then vote on those.
     2. extract_labels=False: Treat each full output as a "vote" and
        use the LLM to identify the majority position.
-
-    The first mode is better for classification; the second for reasoning
-    where the "answer" isn't a single label.
     """
     bk = backend_kwargs or {}
     if model:
@@ -45,20 +42,18 @@ async def synthesize_voting(
 
     if extract_labels:
         return await _vote_with_extraction(llm, gathered)
-    else:
-        return await _vote_holistic(llm, gathered)
+    return await _vote_holistic(llm, gathered)
 
 
 async def _vote_with_extraction(llm: Any, gathered: GatherResult) -> Synthesis:
     """Extract a label from each output, then count votes."""
-    # Step 1: Extract the core answer from each output
     labels = []
     extraction_tokens = 0
 
-    for i, text in enumerate(gathered.texts):
+    for text in gathered.texts:
         prompt = (
             "Extract the single core answer, label, or conclusion from this text. "
-            "Return ONLY the answer — no explanation, no reasoning, just the answer.\n\n"
+            "Return ONLY the answer - no explanation, no reasoning, just the answer.\n\n"
             f"Text:\n{text}\n\n"
             "Core answer:"
         )
@@ -66,13 +61,11 @@ async def _vote_with_extraction(llm: Any, gathered: GatherResult) -> Synthesis:
         labels.append(result.text.strip().lower())
         extraction_tokens += result.total_tokens
 
-    # Step 2: Vote
     vote_counts = Counter(labels)
     winner, winner_count = vote_counts.most_common(1)[0]
     total = len(labels)
     confidence = winner_count / total
 
-    # Build result
     vote_summary = "\n".join(
         f"  {label}: {count}/{total} votes ({count / total:.0%})"
         for label, count in vote_counts.most_common()
@@ -86,7 +79,7 @@ async def _vote_with_extraction(llm: Any, gathered: GatherResult) -> Synthesis:
 
     if confidence < 0.5:
         result_text += (
-            "\n\nWARNING: No majority — agents are split. "
+            "\n\nWARNING: No majority - agents are split. "
             "This task may be ambiguous or under-specified."
         )
 
@@ -96,6 +89,7 @@ async def _vote_with_extraction(llm: Any, gathered: GatherResult) -> Synthesis:
         gather=gathered,
         raw_outputs=gathered.texts,
         synthesis_tokens=extraction_tokens,
+        requested_strategy="voting",
     )
 
 
@@ -124,4 +118,5 @@ async def _vote_holistic(llm: Any, gathered: GatherResult) -> Synthesis:
         gather=gathered,
         raw_outputs=gathered.texts,
         synthesis_tokens=result.total_tokens,
+        requested_strategy="voting",
     )

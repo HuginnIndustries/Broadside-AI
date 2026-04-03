@@ -1,8 +1,8 @@
-"""Consensus synthesis — best for knowledge tasks.
+"""Consensus synthesis - best for knowledge tasks.
 
 Identifies what most agents agree on and flags disagreements. Works by
 having an LLM read all outputs and extract the consensus, rather than
-trying to do text-matching (which breaks on paraphrasing).
+trying to do text matching directly.
 
 This is the right strategy when:
 - The task has factual answers (comparisons, analyses, summaries)
@@ -28,9 +28,9 @@ async def synthesize_consensus(
     """Extract consensus from gathered outputs.
 
     Returns a synthesis that clearly separates:
-    1. What all/most agents agreed on
-    2. Where agents disagreed (and what each side said)
-    3. Any facts that only one agent mentioned (potential hallucination or insight)
+    1. What all or most agents agreed on
+    2. Where agents disagreed and what each side said
+    3. Any facts that only one agent mentioned
     """
     bk = backend_kwargs or {}
     if model:
@@ -43,7 +43,7 @@ async def synthesize_consensus(
 
     prompt = (
         "You are analyzing outputs from multiple independent agents who received "
-        "the same task. Your job is to extract the CONSENSUS — what they agree on.\n\n"
+        "the same task. Your job is to extract the CONSENSUS - what they agree on.\n\n"
         "Structure your response as:\n\n"
         "CONSENSUS:\n"
         "Points that all or most agents agree on.\n\n"
@@ -65,4 +65,5 @@ async def synthesize_consensus(
         gather=gathered,
         raw_outputs=gathered.texts,
         synthesis_tokens=result.total_tokens,
+        requested_strategy="consensus",
     )

@@ -1,159 +1,148 @@
 # Architecture
 
-This document explains Broadside's design decisions and, more importantly,
-what's deliberately out of scope and why. Reference this when evaluating
-feature requests.
+Broadside-AI is intentionally opinionated. It is a scatter/gather engine for
+CLI automation, not a general agent framework.
 
-## The Core Constraint
+## Design rule
 
-Every design decision is tested against one question:
+Every feature proposal gets filtered through one question:
 
-> Does this add coordination overhead without a clear benefit?
+> Does this improve scriptability or result quality without adding orchestration overhead?
 
-If yes, it doesn't belong in Broadside.
+If the answer is no, it probably does not belong here.
 
-## Data Flow
+## Data flow
 
-```
+```text
 Task
-  │
-  ▼
-Scatter ──→ Agent 1 ──┐
-       ──→ Agent 2 ──┤  (parallel, independent, no shared state)
-       ──→ Agent 3 ──┘
-                      │
-                      ▼
-                   Gather (normalize outputs, compute stats)
-                      │
-                      ▼
-                  Synthesize (consensus / voting / LLM)
-                      │
-                      ▼
-                   Output (with cost + diversity metadata)
+  |
+  v
+Scatter -> Agent 1 --
+        -> Agent 2 --+-> Gather -> Synthesize -> Output
+        -> Agent 3 --
 ```
 
-Each step is independently callable. `run()` wires them together for the
-common case, but you can call `scatter()`, `gather()`, and `synthesize()`
-individually when you need more control.
+Each scatter branch is independent. There is no shared state, no mid-flight
+coordination, and no dependency between branches.
 
-## Why These Design Decisions
+## Why the API is function-first
 
-### Functions over classes
+Broadside-AI exposes:
 
-The public API is `scatter()`, `gather()`, `synthesize()`, `run()` — functions,
-not methods on an orchestrator object. There's no `Pipeline` class or `Workflow`
-builder.
+- `scatter()`
+- `gather()`
+- `synthesize()`
+- `run()`
 
-Why: the scatter/gather pattern is a pipeline with exactly one shape. A class
-would add ceremony without adding capability. The `Task` and `Synthesis`
-dataclasses hold state because they need to; the operations on them don't.
+There is no `Pipeline`, `Workflow`, or orchestration object because the system
+has one dominant shape. A builder API would add ceremony without adding real
+capability.
 
-### Backends are pluggable but minimal
+`Task`, `GatherResult`, and `Synthesis` are data models. The orchestration
+steps are plain functions.
 
-A backend implements two methods: `complete()` and `name()`. That's it.
-No streaming, no tool use, no conversation history.
+## CLI contract
 
-Why: scatter agents are stateless single-shot calls. They don't need
-conversational APIs. Keeping the backend interface thin means adding a new
-provider is ~50 lines of code.
+The CLI is designed for use inside other tools:
 
-### Ollama in base install
+- `run` writes the final result to stdout by default
+- artifacts are written only with `--save` or `--output`
+- `--json-output` emits a stable machine-readable payload
+- rich terminal output is shown only when stdout is a TTY
+- `validate-task` gives a simple success/failure contract for CI
 
-The Ollama backend uses only `httpx` (already a dependency). Anthropic and
-OpenAI are optional extras.
+That contract matters as much as the Python API. Broadside-AI is intended to be
+easy to call from shell scripts, build systems, and subprocess wrappers.
 
-Why: someone should be able to `pip install broadside-ai` and run the quick start
-without an API key. First impressions are permanent.
+## Structured output pipeline
 
-### Budget circuit breakers are mandatory
+When `Task.output_schema` is present:
 
-Every scatter tracks token usage. You can set `max_tokens` to kill branches
-that exceed a budget.
+- prompts explicitly require valid JSON
+- scatter outputs are parsed during gather
+- parsed outputs are stored alongside raw text
+- synthesis can use structured strategies such as `weighted_merge`
+- early-stop agreement checks ignore `confidence`
 
-Why: scatter/gather multiplies API costs by N. Without budget controls, a
-misconfig with N=20 burns through an API budget in seconds. This is a safety
-feature, not an optimization.
+Structured-output handling is not bolted on after the fact. It is part of the
+main path for automation-oriented use cases.
 
-### 3–5 agents is the default
+## Backend model
 
-`n=3` is the default. We warn (but allow) N > 20.
+A backend only needs to implement:
 
-Why: Google DeepMind's "Towards a Science of Scaling Agent Systems" (Dec 2025)
-tested 180 configurations and found performance plateaus beyond 4 agents.
-Practitioners (Skywork.ai, n8n) report the same. Higher N has diminishing
-returns and increasing merge complexity.
+- `complete()`
+- `name()`
 
-### Three synthesis strategies
+That interface stays intentionally small because Broadside-AI is built around
+single-shot prompts. There is no conversation manager, tool loop, or agent
+lifecycle in the hot path.
 
-- **LLM** (default): general-purpose, works for everything
-- **Consensus**: best for knowledge tasks (ACL 2025, Kaesberg et al.)
-- **Voting**: best for reasoning/classification (self-consistency sampling)
+## Execution defaults
 
-Why these three: they map to the research on what actually works. We don't
-offer "pick the best one" because that requires a quality metric we can't
-define generically.
+Broadside-AI defaults to:
 
-## What's Out of Scope
+- parallel execution for Anthropic, OpenAI, and Ollama cloud models
+- sequential execution for local Ollama models
 
-These aren't temporary omissions — they're architectural decisions.
+This default is meant to help users succeed without tuning. Cloud models benefit
+from parallel fan-out. Local models on modest hardware often do not.
+
+## Budget and early stop
+
+Scatter/gather multiplies cost by design, so budget tracking is part of the
+core contract, not an optional add-on.
+
+`ScatterBudget` provides an upper bound on token usage. `EarlyStop` lets callers
+end a run once enough useful signal has arrived.
+
+## Supported extension points
+
+Broadside-AI is designed to grow in a few narrow places:
+
+1. New synthesis strategies
+2. New task definitions in `tasks/`
+3. New LLM backends
+4. Benchmark coverage for more models and workloads
+5. Better machine-readable integration examples
+
+These are additive without introducing cross-branch coordination.
+
+## Out of scope
+
+These are deliberate boundaries, not postponed work.
 
 ### Inter-agent communication
 
-Agents don't talk to each other. No shared memory, no message passing, no
-blackboard. Each scatter branch is fully independent.
+Agents do not message each other. No inboxes, no shared memory, no blackboard.
 
-Why: inter-agent communication is the primary source of coordination overhead
-in hierarchical frameworks. UC Berkeley's MAST taxonomy (NeurIPS 2025) found
-coordination breakdowns were 36.9% of all failures across seven frameworks.
-Broadside eliminates this failure mode by design.
+Why: once outputs depend on one another, the system stops being scatter/gather
+and starts becoming a workflow engine.
 
-If you need agents to communicate, you need a different tool. LangGraph's
-state graph or CrewAI's crew model are designed for that.
+### Persistent multi-step state
 
-### Persistent state across scatters
+Each run is independent. If a later run should depend on an earlier one, pass
+the earlier result in explicitly as context.
 
-Each scatter/gather cycle is independent. There's no "memory" that carries
-forward from one scatter to the next.
-
-Why: persistent state creates coupling. If scatter #2 depends on scatter #1's
-output, you're building a DAG, not a scatter/gather. Use the output of one
-`run()` call as context for the next — that's explicit and debuggable.
+Why: explicit composition is easier to debug than hidden memory.
 
 ### DAG scheduling
 
-Broadside is one pattern: scatter/gather. It's not a workflow engine.
+Broadside-AI is not Airflow, Prefect, or Temporal.
 
-Why: DAG schedulers (Airflow, Prefect, Temporal) already exist and are
-battle-tested. Building another one would be scope creep. If your workflow
-has dependencies between steps, use a DAG scheduler and call Broadside for
-the parallelizable steps within it.
+Why: workflow scheduling is a different product with different failure modes.
 
-### Agent roles or personas
+### Agent roles and crew structure
 
-There are no "researcher agents" or "reviewer agents." There are tasks and
-there are agents that run them.
+There are no built-in researcher, reviewer, or planner roles.
 
-Why: roles create implicit coordination. A "reviewer" implies it's reviewing
-something another agent produced. That's a dependency. Broadside's agents
-are anonymous and interchangeable by design.
+Why: role systems imply coordination and dependency. Broadside-AI treats
+branches as interchangeable independent attempts.
 
 ### Autonomous long-running agents
 
-Broadside doesn't run agents that loop indefinitely, make their own decisions
-about what to do next, or manage their own lifecycle.
+Broadside-AI does not run self-directed agents that plan, loop, and persist
+state over time.
 
-Why: scatter/gather is a batch pattern. It starts, runs N branches, collects
-results, and stops. Long-running autonomous agents need lifecycle management,
-error recovery, and persistence — features that pull the framework toward
-a different architecture entirely.
-
-## Extending Broadside
-
-The right extension points are:
-
-1. **Synthesis strategies**: new ways to collapse N outputs → 1
-2. **Task definitions**: YAML files in `tasks/`, no core code needed
-3. **Backends**: new LLM providers via the `Backend` interface
-4. **Benchmarks**: measuring how scatter/gather performs on different task types
-
-These are all additive — they extend capability without adding coordination.
+Why: that requires lifecycle management, persistence, and recovery semantics
+that would pull the project away from its core pattern.

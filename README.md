@@ -1,271 +1,252 @@
 # Broadside-AI
 
-**2.52x faster than sequential on Claude Sonnet 4** — code review hits 2.94x (near the 3.0x theoretical max with 3 agents). Real benchmarks, real numbers. [See full results below.](#benchmarks)
+Broadside-AI is a CLI-first Python tool for parallel LLM aggregation. It fans a
+task out to multiple independent runs, gathers the outputs, and produces one
+final result that works well in scripts, CI, and other automation.
 
-Hierarchical agent frameworks fail 41–86.7% of the time, with coordination breakdowns as the single largest failure category at 36.9%. Broadside takes a different approach: scatter your task to N parallel agents, gather the results, synthesize. No org charts, no inter-agent messaging, no coordination overhead.
+It is intentionally narrow:
+
+- no inter-agent messaging
+- no workflow DAGs
+- no persistent multi-step state
+- no crew hierarchy or planner/reviewer role system
+
+That constraint is the product. Broadside-AI is for cases where "ask several
+times, then combine the signal" is useful, but a full orchestration framework
+would be overkill.
+
+## Where it helps
+
+Broadside-AI is strongest when parallel attempts add value:
+
+- code review, where multiple passes catch different issues
+- classification and extraction, where structured outputs can be merged
+- comparison and analysis, where consensus matters
+- generation, where diversity creates better raw material
+
+Committed benchmark snapshots in `benchmarks/results/` currently show:
+
+- `2.52x` average speedup vs sequential with Anthropic Claude Sonnet 4
+- `2.26x` average speedup vs sequential with Ollama cloud Nemotron
+- `1.07x` average speedup on a modest local CPU with `gemma3:1b`
 
 ## Install
 
-```bash
-pip install broadside-ai
-```
-
-**From source** (if you cloned the repo):
-
-```bash
-git clone https://github.com/HuginnIndustries/Broadside-AI.git
-cd Broadside-AI
-pip install -e .
-```
-
-The `-e` flag installs in editable mode — code changes take effect immediately without reinstalling.
-
-## Quick Start
-
-Install [Ollama](https://ollama.ai), sign in for free cloud access, and run:
+Base install includes the Ollama backend:
 
 ```bash
 pip install broadside-ai
-python -m broadside_ai run --prompt "Write a pitch for a dotfile manager" --n 3
 ```
 
-The `--n 3` means "scatter to 3 parallel agents." Research shows 3–5 is the sweet spot — beyond that, output quality plateaus while costs scale linearly (DeepMind 2025).
-
-The default model is `nemotron-3-super:cloud`, which runs on Ollama's cloud (free tier, no GPU needed). To use a different cloud model:
+Optional extras:
 
 ```bash
-python -m broadside_ai run --prompt "Write a pitch for a dotfile manager" --n 3 --model gpt-oss:120b-cloud
+pip install broadside-ai[anthropic]
+pip install broadside-ai[openai]
+pip install broadside-ai[all]
 ```
 
-**Have a GPU?** Pull a local model and skip the cloud entirely:
+## Quick start
+
+### Plain CLI output
+
+`run` prints only the synthesized result to stdout by default, which makes it
+easy to compose with other tools:
 
 ```bash
-ollama pull gemma3:1b
-python -m broadside_ai run --prompt "Write a pitch for a dotfile manager" --n 3 --model gemma3:1b
+broadside-ai run --prompt "Write a pitch for a dotfile manager" --n 3
+python -m broadside_ai run --prompt "Summarize this changelog" --n 3 > summary.txt
 ```
 
-### Python API
+Files are written only when you ask for them with `--save` or `--output`.
 
-```python
-from broadside_ai import Task, run_sync
+### Ollama cloud
 
-task = Task(
-    prompt="Write a one-paragraph pitch for a CLI tool that helps developers manage dotfiles.",
-)
-
-result = run_sync(task, n=3, backend="ollama")
-print(result.result)
-```
-
-For async code, use `run()` directly:
-
-```python
-from broadside_ai import Task, run
-
-result = await run(task, n=3, backend="ollama")
-```
-
-## How It Works
-
-```
-Task → Scatter (N parallel agents) → Gather → Synthesize → Human checkpoint
-```
-
-Each agent runs independently — no shared state, no waiting on other agents. The synthesis step identifies consensus, flags outliers, and produces a single actionable output. The gather step is the natural point for human review.
-
-Results are saved to `broadside_ai_output/` organized by model and topic for easy comparison across runs.
-
-## Synthesis Strategies
-
-Broadside ships with four strategies for collapsing N outputs into one:
-
-| Strategy         | Best for           | How it works                                                                                        |
-| ---------------- | ------------------ | --------------------------------------------------------------------------------------------------- |
-| `llm` (default)  | General tasks      | Sends all outputs to a model that identifies consensus, flags outliers, and writes a unified answer |
-| `consensus`      | Knowledge tasks    | Extracts agreed-upon claims, disagreements, and unique insights                                     |
-| `voting`         | Reasoning tasks    | Each output votes on an answer; majority wins                                                       |
-| `weighted_merge` | Scored/structured  | Confidence-weighted field merge — zero LLM calls on happy path                                     |
-
-Note: the default `llm` strategy calls the model one additional time for synthesis, which can use as many tokens as the scatter itself. `consensus` and `voting` are lighter alternatives. `weighted_merge` uses no LLM calls at all — it merges structured fields algorithmically.
+Install Ollama, sign in, and pull the default cloud model:
 
 ```bash
-python -m broadside_ai run --prompt "Your task" --n 3 --synthesis voting
+ollama signin
+ollama pull nemotron-3-super:cloud
+broadside-ai run --prompt "Write a pitch for a dotfile manager" --n 3
 ```
 
-### Structured Outputs
+Execution defaults are tuned for user success:
 
-Pass an `output_schema` to get structured JSON from each agent. Works with any strategy but pairs best with `weighted_merge`:
+- cloud backends and Ollama cloud models run in parallel by default
+- local Ollama models run sequentially by default
 
-```python
-task = Task(
-    prompt="Classify this support ticket",
-    output_schema={"label": "string", "confidence": "float", "reasoning": "string"},
-)
-result = run_sync(task, n=3, backend="ollama", strategy="weighted_merge")
-```
+Override with `--parallel` or `--sequential` when needed.
 
-### Early Termination
-
-Stop scattering early when enough agents agree — saves time and tokens:
-
-```bash
-python -m broadside_ai run --prompt "Your task" --n 5 --early-stop 3 --agreement 0.66
-```
-
-`--early-stop 3` requires at least 3 results before checking. `--agreement 0.66` stops when 66%+ of results match.
-
-## Backends
-
-### Ollama (default — no API key)
-
-Ollama is the default backend and ships with the base install. Sign in to the [Ollama](https://ollama.ai) app for free cloud access — no GPU required.
-
-```bash
-python -m broadside_ai run --prompt "Your task" --n 3
-```
-
-All models run in parallel by default. Use `--sequential` if your hardware can't handle concurrent inference.
-
-Available cloud models:
-
-```
-nemotron-3-super:cloud          (default)
-mistral-large-3:675b-cloud
-deepseek-v3.2:cloud
-qwen3.5:cloud
-qwen3.5:397b-cloud
-qwen3-coder-next:cloud
-kimi-k2.5:cloud
-gpt-oss:120b-cloud
-gpt-oss:20b-cloud
-minimax-m2.7:cloud
-cogito-2.1:671b-cloud
-gemini-3-flash-preview:cloud
-```
-
-Full list: `ollama list --cloud`
-
-Have a GPU? Pull a local model instead:
+### Ollama local
 
 ```bash
 ollama pull gemma3:1b
-python -m broadside_ai run --prompt "Your task" --n 3 --model gemma3:1b
+broadside-ai run --prompt "Write a pitch for a dotfile manager" --n 3 --model gemma3:1b
 ```
 
 ### Anthropic
 
-Uses the Anthropic Messages API. Default model: `claude-sonnet-4-20250514`.
-
 ```bash
 pip install broadside-ai[anthropic]
-```
-
-Set your API key:
-
-```bash
-# Windows (Command Prompt)
-set ANTHROPIC_API_KEY=your-key-here
-
-# Windows (PowerShell)
-$env:ANTHROPIC_API_KEY="your-key-here"
-
-# macOS / Linux
 export ANTHROPIC_API_KEY=your-key-here
+broadside-ai run --prompt "Review this design" --n 3 --backend anthropic
 ```
 
-```bash
-python -m broadside_ai run --prompt "Your task" --n 3 --backend anthropic
-```
-
-Or specify a model:
-
-```bash
-python -m broadside_ai run --prompt "Your task" --n 3 --backend anthropic --model claude-sonnet-4-20250514
-```
-
-### OpenAI (and compatible APIs)
-
-Works with OpenAI, Azure OpenAI, and any API that implements the OpenAI chat completions interface (vLLM, Together, Groq, etc.). Default model: `gpt-4o-mini`.
+### OpenAI-compatible APIs
 
 ```bash
 pip install broadside-ai[openai]
-```
-
-Set your API key:
-
-```bash
-# Windows (Command Prompt)
-set OPENAI_API_KEY=your-key-here
-
-# Windows (PowerShell)
-$env:OPENAI_API_KEY="your-key-here"
-
-# macOS / Linux
 export OPENAI_API_KEY=your-key-here
+broadside-ai run --prompt "Compare these options" --n 3 --backend openai
 ```
+
+For OpenAI-compatible providers, set `OPENAI_BASE_URL` and pass `--model`.
+
+## CLI for automation
+
+### Stable JSON output
+
+Use `--json-output` for scripts and subprocess integrations:
 
 ```bash
-python -m broadside_ai run --prompt "Your task" --n 3 --backend openai
+broadside-ai run tasks/ticket_classification.yaml --n 5 --synthesis weighted_merge --json-output
 ```
 
-For OpenAI-compatible providers, pass `--model` and set `OPENAI_BASE_URL` the same way to point at your provider.
+The JSON payload always includes:
 
-### All backends at once
+- `status`
+- `prompt`
+- `backend`
+- `model`
+- `mode`
+- `requested_strategy`
+- `strategy`
+- `result`
+- `parsed_result`
+- `raw_outputs`
+- `gather`
+- `saved_to`
+
+`gather` includes `n_requested`, `n_completed`, `n_failed`, `n_parsed`,
+`total_tokens`, and `wall_clock_ms`.
+
+### Save artifacts when you want them
 
 ```bash
-pip install broadside-ai[all]
+broadside-ai run tasks/code_review.yaml --n 3 --save
+broadside-ai run tasks/code_review.yaml --n 3 --output artifacts/review-run
 ```
 
-## Benchmarks
+Saved runs go under:
 
-Real numbers, 3 agents, parallel vs sequential on the same tasks:
+```text
+broadside_ai_output/{model}/{topic}_{timestamp}/
+```
 
-### Anthropic (claude-sonnet-4-20250514)
+### Validate task files
 
-| Task                  | Parallel | Sequential | Speedup   | Cost vs 1 call | Diversity |
-| --------------------- | -------- | ---------- | --------- | -------------- | --------- |
-| creative_pitch        | 8.4s     | 19.8s      | 2.36x     | 8.6x           | 0.767     |
-| analytical_comparison | 35.3s    | 78.8s      | 2.23x     | 6.8x           | 0.734     |
-| classification        | 4.6s     | 11.4s      | 2.48x     | 6.5x           | 0.640     |
-| summarization         | 10.7s    | 27.9s      | 2.59x     | 7.2x           | 0.735     |
-| code_review           | 17.3s    | 50.8s      | 2.94x     | 5.4x           | 0.651     |
-| **Average**           |          |            | **2.52x** | **6.9x**       | **0.705** |
+```bash
+broadside-ai validate-task tasks/ticket_classification.yaml
+python -m broadside_ai validate-task tasks/ticket_classification.yaml
+```
 
-### Ollama Cloud (nemotron-3-super:cloud)
+Validation exits `0` when every file is valid and `1` when any file fails.
 
-| Task                  | Parallel | Sequential | Speedup   | Cost vs 1 call | Diversity |
-| --------------------- | -------- | ---------- | --------- | -------------- | --------- |
-| creative_pitch        | 6.3s     | 30.1s      | 4.80x     | 10.1x          | 0.827     |
-| analytical_comparison | 56.9s    | 54.4s      | 0.96x     | 7.1x           | 0.764     |
-| classification        | 4.0s     | 13.8s      | 3.45x     | 7.0x           | 0.603     |
-| summarization         | 10.3s    | 11.9s      | 1.15x     | 8.9x           | 0.801     |
-| code_review           | 108.6s   | 102.3s     | 0.94x     | 7.3x           | 0.737     |
-| **Average**           |          |            | **2.26x** | **8.1x**       | **0.746** |
+## Structured outputs and early stop
 
-### Ollama Cloud (deepseek-v3.2:cloud)
+If a task provides `output_schema`, Broadside-AI asks every branch to return
+valid JSON and parses the results through the full pipeline.
 
-| Task                  | Parallel | Sequential | Speedup   | Cost vs 1 call | Diversity |
-| --------------------- | -------- | ---------- | --------- | -------------- | --------- |
-| creative_pitch        | 16.8s    | 28.3s      | 1.68x     | 7.6x           | 0.840     |
-| analytical_comparison | 70.5s    | 119.7s     | 1.70x     | 4.6x           | 0.731     |
-| classification        | 22.0s    | 32.7s      | 1.48x     | 4.3x           | 0.600     |
-| summarization         | 29.6s    | 26.8s      | 0.91x     | 6.6x           | 0.812     |
-| code_review           | 115.0s   | 175.3s     | 1.52x     | 5.2x           | 0.674     |
-| **Average**           |          |            | **1.46x** | **5.7x**       | **0.731** |
+That enables `weighted_merge`, an algorithmic synthesis strategy that:
 
-### Ollama Local (gemma3:1b)
+- makes zero LLM calls on the happy path
+- merges numeric fields with weighted averages
+- merges strings with majority vote
+- merges lists by majority presence
+- uses `confidence` as weight metadata, not as an output field
 
-> Tested on: Intel i7-1165G7 @ 2.80GHz, 16GB RAM, no discrete GPU
+Example:
 
-| Task                  | Parallel | Sequential | Speedup   | Cost vs 1 call | Diversity |
-| --------------------- | -------- | ---------- | --------- | -------------- | --------- |
-| creative_pitch        | 17.3s    | 16.1s      | 0.93x     | 9.2x           | 0.755     |
-| analytical_comparison | 158.1s   | 190.3s     | 1.20x     | 6.3x           | 0.732     |
-| classification        | 12.0s    | 10.4s      | 0.87x     | 7.1x           | 0.750     |
-| summarization         | 30.6s    | 42.9s      | 1.40x     | 6.8x           | 0.803     |
-| code_review           | 187.9s   | 182.6s     | 0.97x     | 6.6x           | 0.735     |
-| **Average**           |          |            | **1.07x** | **7.2x**       | **0.755** |
+```bash
+broadside-ai run tasks/ticket_classification.yaml --n 5 --synthesis weighted_merge --json-output
+```
 
-Local inference on modest hardware still shows gains on longer tasks (1.40x summarization, 1.20x analytical). Short tasks lose to overhead. Better hardware = better parallelism — this is the floor, not the ceiling.
+You can also stop early when enough branches have arrived or agreed:
 
-In early testing, Anthropic showed the most consistent speedups — every task benefited from parallelism, with code review hitting 2.94x (near the 3.0x theoretical max). Ollama cloud results (free tier) were more variable — Nemotron showed strong gains on short tasks while DeepSeek was more moderate but consistent. Local inference on modest hardware (no discrete GPU) showed the smallest gains — parallelism helps most when the bottleneck is network latency, not local compute.
+```bash
+broadside-ai run tasks/ticket_classification.yaml --n 5 --early-stop 3 --agreement 0.66
+```
+
+## Python API
+
+```python
+from broadside_ai import EarlyStop, Task, run_sync
+
+task = Task(
+    prompt="Classify this support message.",
+    output_schema={
+        "label": "string",
+        "confidence": "float",
+        "reasoning": "string",
+    },
+)
+
+result = run_sync(
+    task,
+    n=5,
+    backend="ollama",
+    synthesis_strategy="weighted_merge",
+    early_stop=EarlyStop(min_complete=3, agreement_threshold=0.66),
+)
+
+print(result.result)
+print(result.parsed_result)
+```
+
+Async usage:
+
+```python
+from broadside_ai import Task, run
+
+task = Task(prompt="Summarize the tradeoffs of SQLite vs PostgreSQL for analytics.")
+result = await run(task, n=3, backend="ollama")
+print(result.result)
+```
+
+## Core model
+
+```text
+Task -> Scatter -> Gather -> Synthesize
+```
+
+- `Task`: prompt, optional context, optional output schema
+- `scatter()`: run the task across `n` independent branches
+- `gather()`: normalize outputs, parse structured results, and compute stats
+- `synthesize()`: collapse outputs with `llm`, `consensus`, `voting`, or `weighted_merge`
+- `run()`: convenience wrapper for the full pipeline
+
+## Development
+
+```bash
+pip install -e ".[dev]"
+make test
+make lint
+make typecheck
+make release-check
+```
+
+Repository docs:
+
+- [Architecture](ARCHITECTURE.md)
+- [Contributing](CONTRIBUTING.md)
+- [Release process](RELEASE.md)
+- [Roadmap](ROADMAP.md)
+- [Task library](tasks/README.md)
+- [Benchmarks](benchmarks/README.md)
+
+## Status
+
+Broadside-AI is pre-1.0 software, but the repo is intended to be usable and
+releasable as-is: package metadata, CLI behavior, task validation, and release
+checks are kept in sync in-repo. The markdown docs in this repository are the
+source of truth.

@@ -1,7 +1,7 @@
-"""Budget circuit breaker — mandatory cost control for scatter/gather.
+"""Budget circuit breaker - mandatory cost control for scatter/gather.
 
-Scatter/gather multiplies API costs by design (~15x token usage vs single-agent).
-Every scatter gets a budget. No exceptions.
+Scatter/gather multiplies API costs by design. Every scatter gets a budget.
+No exceptions.
 """
 
 from __future__ import annotations

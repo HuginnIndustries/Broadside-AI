@@ -1,50 +1,58 @@
-# Broadside
+# Broadside-AI
 
-> A Python framework for parallel LLM agent orchestration using scatter/gather instead of hierarchy.
+Broadside-AI is a CLI-first Python tool for parallel LLM aggregation using a
+strict scatter/gather model instead of hierarchical agent coordination.
 
-Broadside implements the scatter/gather pattern as its core organizing principle. A task is scattered to N parallel agents (default 3, sweet spot 3-5), results are gathered, and a synthesis step produces a single output. No inter-agent communication, no hierarchy, no coordination overhead.
+Core flow:
 
-## Core concepts
+- Task
+- Scatter to N independent agents
+- Gather outputs, parsing results, and stats
+- Synthesize into one final answer
 
-- Task: a tightly scoped unit of work with a clear output
-- Scatter: fan a task to N parallel agents (performance plateaus beyond 4-5, DeepMind 2025)
-- Gather: collect and normalize outputs
-- Synthesize: collapse N outputs into one — four strategies:
-  - `llm` (default): general-purpose, sends all outputs to a model for unified synthesis
-  - `consensus`: best for knowledge tasks, extracts agreements and disagreements
-  - `voting`: best for reasoning tasks, majority-wins
-  - `weighted_merge`: best for scored/structured outputs, confidence-weighted field merge (zero LLM calls)
-- Structured outputs: pass `output_schema` dict to Task for JSON-structured agent responses
-- Early termination: quality signals (min_complete, agreement_threshold) cancel remaining branches when results converge
-- Budget: per-scatter token limits (scatter/gather multiplies costs ~15x; synthesis adds more)
+Public API:
 
-## Backends
+- `Task`
+- `EarlyStop`
+- `scatter()`
+- `gather()`
+- `synthesize()`
+- `run()`
+- `run_sync()`
 
-- Ollama (default, no API key needed, free cloud tier with sign-in)
-  - Default model: nemotron-3-super:cloud (runs on Ollama's cloud)
-  - All models run in parallel by default; use --sequential if hardware can't handle it
-- Anthropic (optional extra, `pip install broadside-ai[anthropic]`)
-- OpenAI-compatible (optional extra, `pip install broadside-ai[openai]`)
+Primary CLI:
 
-## Quick start
+- `broadside-ai run`
+- `broadside-ai validate-task`
+- `python -m broadside_ai`
 
-```bash
-pip install broadside-ai
-python -m broadside_ai run --prompt "Your task here" --n 3
-```
+Synthesis strategies:
 
-```python
-from broadside_ai import Task, run_sync
+- `llm`: general-purpose synthesis using an LLM
+- `consensus`: highlights agreements, disagreements, and unique claims
+- `voting`: aggregates discrete answers or majority positions
+- `weighted_merge`: merges structured outputs algorithmically
 
-task = Task(prompt="Your task here")
-result = run_sync(task, n=3, backend="ollama")
-print(result.result)
-```
+Backends:
 
-Results are saved to `broadside_ai_output/{model}/{topic}_{timestamp}/`.
+- Ollama in the base install
+- Anthropic via `broadside-ai[anthropic]`
+- OpenAI-compatible APIs via `broadside-ai[openai]`
 
-## Links
+Execution defaults:
 
-- Source: https://github.com/jsesler/broadside
-- Docs: https://jsesler.github.io/broadside
-- PyPI: https://pypi.org/project/broadside-ai/
+- cloud backends and Ollama cloud models run in parallel by default
+- local Ollama models run sequentially by default
+
+Project docs live in-repo:
+
+- `README.md`
+- `ARCHITECTURE.md`
+- `CONTRIBUTING.md`
+- `RELEASE.md`
+- `ROADMAP.md`
+
+Repository:
+
+- Source: https://github.com/HuginnIndustries/Broadside-AI
+- Issues: https://github.com/HuginnIndustries/Broadside-AI/issues

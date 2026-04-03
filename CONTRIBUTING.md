@@ -1,10 +1,9 @@
-# Contributing to Broadside
+# Contributing to Broadside-AI
 
-Broadside is early-stage and welcomes contributions. The fastest path from
-clone to merged PR is through the task library — you can contribute a YAML
-file without touching core code.
+Broadside-AI is a small, opinionated project. Contributions are welcome, but
+the bar is clarity, correctness, and fit with the product shape.
 
-## Quick Start (5 minutes)
+## Development setup
 
 ```bash
 git clone https://github.com/HuginnIndustries/Broadside-AI.git
@@ -13,85 +12,91 @@ pip install -e ".[dev]"
 make test
 ```
 
-All tests should pass. If they don't, open an issue.
+All tests and checks should pass locally before you open a PR.
 
-## Ways to Contribute
-
-### 1. Task Library (easiest — no core code needed)
-
-Add a YAML file to `tasks/`. A task is a well-scoped prompt with optional
-context and output schema. See `tasks/README.md` for the schema.
+## Development commands
 
 ```bash
-# Add your task
-cp tasks/_template.yaml tasks/my_task.yaml
-# Edit it
-# Validate
-python -m broadside_ai.task_validator tasks/my_task.yaml
-# Open a PR — no issue required for task contributions
+make test
+make lint
+make typecheck
+make release-check
+make clean
 ```
 
-### 2. Synthesis Strategies
+`make release-check` runs the full local release gate:
 
-New ways to collapse N outputs into one. Look at
-`src/broadside_ai/strategies/consensus.py` for the pattern. Ideas:
+- tests
+- Ruff lint and formatting checks
+- mypy
+- package build
+- `twine check`
 
-- Embedding-based clustering (group similar outputs, pick representative)
-- Chain-of-thought synthesis (multi-step reasoning across outputs)
+## Good first contributions
 
-Open an issue first to discuss the approach.
+### Task library additions
 
-### 3. Benchmarks
-
-Run the benchmark suite against a different model and contribute your results:
+Add a YAML task under `tasks/` and validate it:
 
 ```bash
-python benchmarks/suite.py deepseek-v3.2:cloud
+broadside-ai validate-task tasks/my_task.yaml
+python -m broadside_ai validate-task tasks/my_task.yaml
 ```
 
-Results are saved to `benchmarks/results/` in a timestamped folder with full
-reproduction data. See `benchmarks/README.md` for details on metrics and output
-structure.
+Task-library changes are the easiest way to contribute without touching runtime
+code.
 
-### 4. Backend Integrations
+### Synthesis improvements
 
-Add support for a new LLM provider. Implement the `Backend` interface in
-`src/broadside_ai/backends/base.py`. Current backends (Ollama, Anthropic, OpenAI)
-are good reference implementations.
+Look at:
 
-Open an issue first.
+- `src/broadside_ai/strategies/consensus.py`
+- `src/broadside_ai/strategies/voting.py`
+- `src/broadside_ai/strategies/weighted_merge.py`
 
-## Development
+New strategies should improve aggregation quality without introducing branch
+coordination.
+
+### Benchmarks
+
+Run the benchmark suite against another model or hardware profile and contribute
+the results:
 
 ```bash
-make test        # Run tests
-make lint        # Run ruff linter
-make typecheck   # Run mypy
+python benchmarks/suite.py
+python benchmarks/suite.py gemma3:1b
+python benchmarks/suite.py --backend anthropic
 ```
 
-## Code Style
+## Contribution rules
 
-- Comments explain WHY, not what
-- Simple and readable over clever
-- Functions first, classes when state demands it
-- Type hints on all public functions
+- keep PRs focused
+- include tests for behavior changes
+- update docs when behavior or defaults change
+- prefer source-of-truth changes over one-off fixes
+- do not expand scope past scatter/gather
 
-## PR Guidelines
+## What will not be merged
 
-- Keep PRs focused — one feature or fix per PR
-- Task library contributions: no issue required, just open the PR
-- Core code changes: open an issue first to discuss
-- Include tests for new functionality
-- Run `make test && make lint` before opening
+Broadside-AI intentionally excludes:
 
-## What We Won't Merge
+- inter-agent communication
+- DAG orchestration
+- persistent multi-step agent memory
+- role-based crew systems
+- autonomous long-running agents
 
-Broadside has a clear scope. These are out of bounds (see `ARCHITECTURE.md`):
+See `ARCHITECTURE.md` if you are unsure whether an idea fits.
 
-- Inter-agent communication or messaging
-- Persistent state across scatter operations
-- DAG scheduling or workflow orchestration
-- Agent roles, personas, or org charts
-- Autonomous long-running agents
+## Release-sensitive changes
 
-If you're unsure whether something fits, open an issue and ask.
+If a change affects any of the following, update the corresponding docs in the
+same PR:
+
+- install or quick-start behavior
+- default models or backend behavior
+- CLI flags, JSON payloads, or output paths
+- package metadata or extras
+- benchmark claims in `README.md`
+
+For release work, follow `RELEASE.md`.

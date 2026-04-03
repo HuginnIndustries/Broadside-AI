@@ -1,11 +1,11 @@
-"""Conflict detection — flag contradictions between scatter outputs.
+"""Conflict detection - flag contradictions between scatter outputs.
 
 The hardest part of aggregation is when agents disagree on facts. Rather than
-silently picking one answer, Broadside flags conflicts explicitly so a human
+silently picking one answer, Broadside-AI flags conflicts explicitly so a human
 (or synthesis strategy) can make an informed call.
 
-Skywork.ai reported ~7% fact conflicts and 11% duplication in parallel outputs.
-This module exists to surface that 7%.
+Skywork.ai reported about 7% fact conflicts and 11% duplication in parallel
+outputs. This module exists to surface that 7%.
 """
 
 from __future__ import annotations
@@ -47,7 +47,7 @@ async def detect_conflicts(
 ) -> ConflictReport:
     """Use an LLM to detect factual contradictions between outputs.
 
-    This is a separate step from synthesis — you can run it independently
+    This is a separate step from synthesis - you can run it independently
     to audit outputs before deciding how to synthesize.
     """
     bk = backend_kwargs or {}
@@ -58,7 +58,7 @@ async def detect_conflicts(
     numbered = "\n\n".join(f"--- Output {i + 1} ---\n{text}" for i, text in enumerate(texts))
 
     prompt = (
-        "Compare these agent outputs and identify any CONTRADICTIONS — places "
+        "Compare these agent outputs and identify any CONTRADICTIONS - places "
         "where two or more outputs make claims that cannot both be true.\n\n"
         "For each contradiction found, provide:\n"
         "- DESCRIPTION: What the contradiction is\n"
@@ -73,8 +73,6 @@ async def detect_conflicts(
 
     result = await llm.complete(prompt)
 
-    # Parse the response into structured conflicts
-    # For v0, we return the raw analysis. Structured parsing is a Phase 2 upgrade.
     no_conflicts = "no conflicts detected" in result.text.lower()
 
     if no_conflicts:
@@ -83,8 +81,6 @@ async def detect_conflicts(
             analysis_tokens=result.total_tokens,
         )
 
-    # Return the full analysis as a single conflict entry for now
-    # TODO: Parse into individual Conflict objects
     return ConflictReport(
         conflicts=[
             Conflict(

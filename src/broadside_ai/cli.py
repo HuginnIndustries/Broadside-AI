@@ -1,10 +1,11 @@
-"""CLI entrypoint — `broadside run` from the terminal."""
+"""CLI entrypoint for Broadside-AI."""
 
 from __future__ import annotations
 
 import asyncio
 import json
 import sys
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -13,75 +14,91 @@ import click
 import yaml
 from rich.console import Console
 from rich.panel import Panel
-from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
+from rich.progress import Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
 
 from broadside_ai.budget import ScatterBudget
-from broadside_ai.gather import gather
+from broadside_ai.execution import resolve_parallel_mode
+from broadside_ai.gather import GatherResult, gather
+from broadside_ai.quality import EarlyStop
 from broadside_ai.scatter import scatter
-from broadside_ai.synthesize import synthesize
+from broadside_ai.synthesize import Synthesis, synthesize
 from broadside_ai.task import Task
+from broadside_ai.task_validator import validate_task_file
 
 console = Console()
-
-
-def _truncate_prompt(prompt: str, max_len: int = 60) -> str:
-    """Shorten a prompt for display, preserving the start."""
-    if len(prompt) <= max_len:
-        return prompt
-    return prompt[: max_len - 1].rstrip() + "\u2026"
-
-
-# Default output directory — created alongside the user's working directory
 _OUTPUT_DIR = Path("broadside_ai_output")
+
+
+@dataclass
+class RunArtifacts:
+    """Normalized output of one CLI run."""
+
+    task: Task
+    backend: str
+    model: str
+    mode: str
+    requested_strategy: str
+    gather: GatherResult
+    synthesis: Synthesis | None
+    raw: bool
+    saved_to: Path | None
+
+    def to_payload(self) -> dict[str, Any]:
+        actual_strategy = self.synthesis.strategy if self.synthesis else None
+        result_text = self.synthesis.result if self.synthesis else None
+        parsed_result = self.synthesis.parsed_result if self.synthesis else None
+        raw_outputs = self.synthesis.raw_outputs if self.synthesis else self.gather.texts
+        return {
+            "status": "ok",
+            "prompt": self.task.prompt,
+            "backend": self.backend,
+            "model": self.model,
+            "mode": self.mode,
+            "requested_strategy": self.requested_strategy,
+            "strategy": actual_strategy,
+            "result": result_text,
+            "parsed_result": parsed_result,
+            "raw_outputs": raw_outputs,
+            "gather": {
+                "n_requested": self.gather.n_requested,
+                "n_completed": self.gather.n_completed,
+                "n_failed": self.gather.n_failed,
+                "n_parsed": self.gather.n_parsed,
+                "total_tokens": self.gather.total_tokens,
+                "wall_clock_ms": round(self.gather.wall_clock_ms, 1),
+            },
+            "saved_to": str(self.saved_to) if self.saved_to is not None else None,
+        }
 
 
 @click.group()
 @click.version_option(package_name="broadside-ai")
 def main() -> None:
-    """Broadside — parallel LLM agent orchestration using scatter/gather."""
-    pass
+    """Broadside-AI - parallel LLM aggregation for CLIs, scripts, and CI."""
 
 
 @main.command()
 @click.argument("task_file", type=click.Path(exists=True), required=False)
 @click.option("--prompt", "-p", help="Inline prompt (instead of a task file).")
-@click.option("--n", "-n", default=3, help="Number of agents (default: 3).")
-@click.option("--backend", "-b", default="ollama", help="LLM backend (default: ollama).")
+@click.option("--n", "-n", default=3, show_default=True, help="Number of agents.")
+@click.option("--backend", "-b", default="ollama", show_default=True, help="LLM backend.")
 @click.option("--model", "-m", help="Model name (backend-specific).")
-@click.option("--synthesis", "-s", default="llm", help="Synthesis strategy (default: llm).")
+@click.option("--synthesis", "-s", default="llm", show_default=True, help="Synthesis strategy.")
 @click.option("--max-tokens", type=int, help="Per-scatter token budget.")
 @click.option(
     "--parallel/--sequential",
     default=None,
-    help="Force parallel or sequential execution. Default: parallel.",
+    help=(
+        "Force parallel or sequential execution. Default: cloud backends "
+        "parallel, local Ollama sequential."
+    ),
 )
-@click.option(
-    "--output",
-    "-o",
-    type=click.Path(),
-    default=None,
-    help="Output directory. Default: broadside_ai_output/",
-)
-@click.option("--no-save", is_flag=True, help="Don't save results to files.")
-@click.option("--raw", is_flag=True, help="Show raw outputs instead of synthesis.")
-@click.option("--json-output", "json_out", is_flag=True, help="Output as JSON.")
-@click.option(
-    "--early-stop",
-    type=int,
-    default=None,
-    help="Stop after N results arrive (early termination).",
-)
-@click.option(
-    "--agreement",
-    type=float,
-    default=None,
-    help="Stop when this fraction of results agree (0.0-1.0).",
-)
-@click.option(
-    "--checkpoint",
-    is_flag=True,
-    help="Enable interactive checkpoints (pause for human review at each stage).",
-)
+@click.option("--output", "-o", type=click.Path(), help="Directory to save run artifacts.")
+@click.option("--save", is_flag=True, help="Save run artifacts to the default output directory.")
+@click.option("--raw", is_flag=True, help="Emit raw scatter outputs instead of a synthesis.")
+@click.option("--json-output", "json_out", is_flag=True, help="Emit a stable JSON payload.")
+@click.option("--early-stop", type=int, help="Stop after this many results arrive.")
+@click.option("--agreement", type=float, help="Stop when this fraction of results agree.")
 def run(
     task_file: str | None,
     prompt: str | None,
@@ -92,69 +109,86 @@ def run(
     max_tokens: int | None,
     parallel: bool | None,
     output: str | None,
-    no_save: bool,
+    save: bool,
     raw: bool,
     json_out: bool,
     early_stop: int | None,
     agreement: float | None,
-    checkpoint: bool,
 ) -> None:
     """Run a scatter/gather cycle on a task."""
     if not task_file and not prompt:
-        console.print("[red]Error:[/red] Provide a task file or --prompt.")
-        sys.exit(1)
+        raise click.UsageError("Provide a task file or --prompt.")
 
-    # Build the task
-    if task_file:
-        task = _load_task_file(task_file)
-    else:
-        task = Task(prompt=prompt)  # type: ignore[arg-type]
-
-    # Build backend kwargs
-    bk: dict[str, Any] = {}
+    task = _load_task_file(task_file) if task_file else Task(prompt=prompt or "")
+    backend_kwargs: dict[str, Any] = {}
     if model:
-        bk["model"] = model
+        backend_kwargs["model"] = model
 
     budget = ScatterBudget(max_tokens=max_tokens) if max_tokens else None
+    early_stop_config = (
+        EarlyStop(min_complete=early_stop, agreement_threshold=agreement)
+        if early_stop is not None or agreement is not None
+        else None
+    )
+    run_parallel = resolve_parallel_mode(backend, backend_kwargs, explicit=parallel)
     output_dir = Path(output) if output else _OUTPUT_DIR
-    save = not no_save
+    save_enabled = save or output is not None
+    rich_output = sys.stdout.isatty() and not json_out
 
-    # Build early stop config
-    es = None
-    if early_stop is not None or agreement is not None:
-        from broadside_ai.quality import EarlyStop
-
-        es = EarlyStop(min_complete=early_stop, agreement_threshold=agreement)
-
-    # Build checkpoint
-    cp = None
-    if checkpoint:
-        from broadside_ai.checkpoints import TerminalCheckpoint
-
-        cp = TerminalCheckpoint()
-
-    # Run the scatter/gather/synthesize pipeline
     try:
-        asyncio.run(
+        artifacts = asyncio.run(
             _run_pipeline(
-                task,
-                n,
-                backend,
-                bk,
-                synthesis,
-                budget,
-                parallel,
-                output_dir,
-                save,
-                raw,
-                json_out,
-                es,
-                cp,
+                task=task,
+                n=n,
+                backend=backend,
+                backend_kwargs=backend_kwargs,
+                strategy=synthesis,
+                budget=budget,
+                run_parallel=run_parallel,
+                raw=raw,
+                save_enabled=save_enabled,
+                output_dir=output_dir,
+                early_stop=early_stop_config,
+                rich_output=rich_output,
             )
         )
     except RuntimeError as exc:
-        console.print(f"\n[bold red]Error:[/bold red] {exc}")
-        sys.exit(1)
+        raise click.ClickException(str(exc)) from exc
+
+    if json_out:
+        click.echo(json.dumps(artifacts.to_payload(), ensure_ascii=False))
+        return
+
+    if rich_output:
+        _render_human_output(artifacts)
+        return
+
+    if artifacts.raw:
+        click.echo(_format_plain_raw(artifacts.gather.texts))
+    else:
+        click.echo(artifacts.synthesis.result if artifacts.synthesis else "")
+
+
+@main.command(name="validate-task")
+@click.argument("task_files", nargs=-1, type=click.Path())
+def validate_task(task_files: tuple[str, ...]) -> None:
+    """Validate one or more task definition files."""
+    if not task_files:
+        raise click.UsageError("Provide at least one task file.")
+
+    all_valid = True
+    for task_file in task_files:
+        errors = validate_task_file(task_file)
+        if errors:
+            all_valid = False
+            click.echo(f"FAIL: {task_file}")
+            for error in errors:
+                click.echo(f"  - {error}")
+        else:
+            click.echo(f"OK: {task_file}")
+
+    if not all_valid:
+        raise SystemExit(1)
 
 
 async def _run_pipeline(
@@ -164,144 +198,65 @@ async def _run_pipeline(
     backend_kwargs: dict[str, Any],
     strategy: str,
     budget: ScatterBudget | None,
-    parallel: bool | None,
-    output_dir: Path,
-    save: bool,
+    run_parallel: bool,
     raw: bool,
-    json_out: bool,
-    early_stop: Any | None = None,
-    checkpoint: Any | None = None,
-) -> None:
-    """Execute the full pipeline with rich output."""
+    save_enabled: bool,
+    output_dir: Path,
+    early_stop: EarlyStop | None,
+    rich_output: bool,
+) -> RunArtifacts:
+    """Execute the run and return normalized artifacts."""
     import time
 
-    run_parallel = parallel if parallel is not None else True
     mode = "parallel" if run_parallel else "sequential"
-
-    # Resolve model display name
-    model_display = backend_kwargs.get("model", "")
-    if not model_display:
-        if backend == "ollama":
-            from broadside_ai.backends.ollama import _DEFAULT_MODEL
-
-            model_display = f"{_DEFAULT_MODEL} (default)"
-        elif backend == "anthropic":
-            model_display = "claude-sonnet-4-20250514 (default)"
-        elif backend == "openai":
-            model_display = "gpt-4o-mini (default)"
-        else:
-            model_display = "(backend default)"
-
-    # JSON mode skips all the rich display
-    if json_out:
-        return await _run_pipeline_quiet(
-            task,
-            n,
-            backend,
-            backend_kwargs,
-            strategy,
-            budget,
-            run_parallel,
-            output_dir,
-            save,
-            raw,
-            early_stop,
+    model_display = _resolve_model_display(backend, backend_kwargs)
+    if rich_output:
+        console.print()
+        console.print(
+            Panel(
+                f"[bold]Prompt:[/bold]  {_truncate_prompt(task.prompt)}\n"
+                f"[bold]Model:[/bold]   {model_display}\n"
+                f"[bold]Backend:[/bold] {backend}\n"
+                f"[bold]Agents:[/bold]  {n}\n"
+                f"[bold]Mode:[/bold]    {mode}\n"
+                f"[bold]Synth:[/bold]   {strategy}",
+                title="[bold cyan]Broadside-AI[/bold cyan]",
+                border_style="cyan",
+                padding=(1, 2),
+            )
         )
+        console.print()
 
-    # --- Header panel ---
-    console.print()
-    console.print(
-        Panel(
-            f"[bold]Prompt:[/bold]  {_truncate_prompt(task.prompt)}\n"
-            f"[bold]Model:[/bold]   {model_display}\n"
-            f"[bold]Backend:[/bold] {backend}\n"
-            f"[bold]Agents:[/bold]  {n}\n"
-            f"[bold]Mode:[/bold]    {mode}\n"
-            f"[bold]Synth:[/bold]   {strategy}",
-            title="[bold cyan]Broadside[/bold cyan]",
-            border_style="cyan",
-            padding=(1, 2),
-        )
-    )
-    console.print()
-
-    # --- Pre-scatter checkpoint ---
-    if checkpoint and not await checkpoint.pre_scatter(task, n):
-        console.print("[yellow]Scatter rejected at checkpoint.[/yellow]")
-        return
-
-    # --- Scatter phase with live progress ---
     scatter_start = time.perf_counter()
-
-    if not run_parallel:
-        # Sequential: show per-agent progress bar
-        results = []
+    if rich_output:
         progress = Progress(
             SpinnerColumn(),
-            TextColumn("[bold blue]{task.description}"),
-            BarColumn(bar_width=30),
-            TextColumn("{task.completed}/{task.total}"),
+            TextColumn("[bold blue]Scattering perspectives[/bold blue]"),
             TimeElapsedColumn(),
             console=console,
         )
         with progress:
-            ptask = progress.add_task("Scattering agents", total=n)
-            from broadside_ai.backends import get_backend
-
-            llm = get_backend(backend, **backend_kwargs)
-            prompt = task.render_prompt()
-            for i in range(n):
-                progress.update(ptask, description=f"Agent {i + 1}/{n} thinking")
-                try:
-                    agent_result = await llm.complete(prompt)
-                    results.append(agent_result)
-                except Exception as exc:
-                    console.print(f"  [yellow]Agent {i + 1} failed: {exc}[/yellow]")
-                progress.update(ptask, advance=1)
-                if early_stop and results:
-                    from broadside_ai.quality import should_stop
-
-                    if should_stop(results, early_stop):
-                        console.print(f"  [green]Early stop[/green] after {len(results)}/{n}")
-                        break
-    else:
-        # Parallel: spinner with elapsed time
-        progress = Progress(
-            SpinnerColumn(),
-            TextColumn(f"[bold blue]Scattering to {n} agents in parallel[/bold blue]"),
-            TimeElapsedColumn(),
-            console=console,
-        )
-        with progress:
-            ptask = progress.add_task("scatter", total=None)
+            progress.add_task("scatter", total=None)
             results = await scatter(
                 task=task,
                 n=n,
                 backend=backend,
                 backend_kwargs=backend_kwargs,
                 budget=budget,
-                parallel=True,
+                parallel=run_parallel,
                 early_stop=early_stop,
             )
-
-    scatter_wall = (time.perf_counter() - scatter_start) * 1000
-
-    if not results:
-        console.print(
-            f"\n[red]All {n} agents failed.[/red] Check that {backend} is running "
-            f"and the model is available."
+    else:
+        results = await scatter(
+            task=task,
+            n=n,
+            backend=backend,
+            backend_kwargs=backend_kwargs,
+            budget=budget,
+            parallel=run_parallel,
+            early_stop=early_stop,
         )
-        sys.exit(1)
-
-    # Quick scatter stats
-    scatter_tokens = sum(r.total_tokens for r in results)
-    n_ok = len(results)
-    console.print(
-        f"  [green]\u2713[/green] {n_ok}/{n} agents returned "
-        f"[dim]({scatter_tokens:,} tokens, {scatter_wall / 1000:.1f}s)[/dim]"
-    )
-
-    # Gather
+    scatter_wall = (time.perf_counter() - scatter_start) * 1000
     gathered = gather(
         results,
         wall_clock_ms=scatter_wall,
@@ -310,162 +265,159 @@ async def _run_pipeline(
     )
 
     if raw:
-        _show_raw(gathered.texts, False)
-        if save:
-            model_hint = _model_dir_name(gathered.results)
-            _save_raw(gathered.texts, task, output_dir, model_hint=model_hint)
-        return
+        saved_to = (
+            _save_raw(gathered.texts, task, output_dir, _model_dir_name(gathered.results))
+            if save_enabled
+            else None
+        )
+        return RunArtifacts(
+            task=task,
+            backend=backend,
+            model=_resolve_model_name(gathered, backend, backend_kwargs),
+            mode=mode,
+            requested_strategy=strategy,
+            gather=gathered,
+            synthesis=None,
+            raw=True,
+            saved_to=saved_to,
+        )
 
-    # --- Post-gather checkpoint ---
-    if checkpoint and not await checkpoint.post_gather(gathered):
-        console.print("[yellow]Synthesis rejected at checkpoint.[/yellow]")
-        return
-
-    # --- Synthesis phase ---
-    synth_start = time.perf_counter()
-    progress = Progress(
-        SpinnerColumn(),
-        TextColumn("[bold blue]Synthesizing perspectives[/bold blue]"),
-        TimeElapsedColumn(),
-        console=console,
-    )
-    with progress:
-        ptask = progress.add_task("synthesize", total=None)
-        result = await synthesize(
+    if rich_output:
+        progress = Progress(
+            SpinnerColumn(),
+            TextColumn("[bold blue]Synthesizing result[/bold blue]"),
+            TimeElapsedColumn(),
+            console=console,
+        )
+        with progress:
+            progress.add_task("synthesize", total=None)
+            synthesis_result = await synthesize(
+                gathered=gathered,
+                strategy=strategy,
+                backend=backend,
+                backend_kwargs=backend_kwargs,
+                output_schema=task.output_schema,
+            )
+    else:
+        synthesis_result = await synthesize(
             gathered=gathered,
             strategy=strategy,
             backend=backend,
             backend_kwargs=backend_kwargs,
             output_schema=task.output_schema,
         )
-    synth_wall = (time.perf_counter() - synth_start) * 1000
-    total_wall = scatter_wall + synth_wall
 
-    console.print(
-        f"  [green]\u2713[/green] Synthesis complete "
-        f"[dim]({result.synthesis_tokens:,} tokens, {synth_wall / 1000:.1f}s)[/dim]"
-    )
-    console.print()
-
-    # --- Post-synthesis checkpoint ---
-    if checkpoint and not await checkpoint.post_synthesis(result):
-        console.print("[yellow]Result rejected at checkpoint.[/yellow]")
-        return
-
-    # --- Results ---
-    _show_rich(result, total_wall)
-
-    if save:
-        _save_results(result, task, output_dir)
-
-
-async def _run_pipeline_quiet(
-    task: Task,
-    n: int,
-    backend: str,
-    backend_kwargs: dict[str, Any],
-    strategy: str,
-    budget: ScatterBudget | None,
-    run_parallel: bool,
-    output_dir: Path,
-    save: bool,
-    raw: bool,
-    early_stop: Any | None = None,
-) -> None:
-    """JSON output mode — no rich display, just data."""
-    import time
-
-    t0 = time.perf_counter()
-    results = await scatter(
+    saved_to = _save_results(synthesis_result, task, output_dir) if save_enabled else None
+    return RunArtifacts(
         task=task,
-        n=n,
         backend=backend,
-        backend_kwargs=backend_kwargs,
-        budget=budget,
-        parallel=run_parallel,
-        early_stop=early_stop,
-    )
-    wall_ms = (time.perf_counter() - t0) * 1000
-
-    if not results:
-        console.print_json('{"error": "all agents failed"}')
-        sys.exit(1)
-
-    gathered = gather(
-        results,
-        wall_clock_ms=wall_ms,
-        n_requested=n,
-        output_schema=task.output_schema,
+        model=_resolve_model_name(gathered, backend, backend_kwargs),
+        mode=mode,
+        requested_strategy=strategy,
+        gather=gathered,
+        synthesis=synthesis_result,
+        raw=False,
+        saved_to=saved_to,
     )
 
-    if raw:
-        _show_raw(gathered.texts, True)
-        if save:
-            model_hint = _model_dir_name(gathered.results)
-            _save_raw(gathered.texts, task, output_dir, model_hint=model_hint)
-        return
 
-    result = await synthesize(
-        gathered=gathered,
-        strategy=strategy,
-        backend=backend,
-        backend_kwargs=backend_kwargs,
-        output_schema=task.output_schema,
-    )
-    _show_json(result)
-    if save:
-        _save_results(result, task, output_dir)
+def _render_human_output(artifacts: RunArtifacts) -> None:
+    """Render a human-friendly terminal view."""
+    if artifacts.raw:
+        for index, text in enumerate(artifacts.gather.texts, start=1):
+            console.print(Panel(text, title=f"Output {index}", border_style="blue"))
+    else:
+        assert artifacts.synthesis is not None
+        console.print(
+            Panel(
+                artifacts.synthesis.result,
+                title="[bold green]Synthesis[/bold green]",
+                border_style="green",
+                padding=(1, 2),
+            )
+        )
+        stats = [
+            f"[bold]{artifacts.gather.n_completed}[/bold] agents",
+            (
+                f"[bold]{artifacts.gather.total_tokens + artifacts.synthesis.synthesis_tokens:,}"
+                "[/bold] tokens"
+            ),
+            f"[bold]{artifacts.gather.wall_clock_ms / 1000:.1f}s[/bold] scatter",
+            f"strategy: [bold]{artifacts.synthesis.strategy}[/bold]",
+        ]
+        console.print(f"\n[dim]{' | '.join(stats)}[/dim]")
+
+    if artifacts.saved_to is not None:
+        try:
+            display_path = artifacts.saved_to.relative_to(Path.cwd())
+        except ValueError:
+            display_path = artifacts.saved_to
+        console.print(f"\n[dim]Saved to {display_path}[/dim]")
+
+
+def _truncate_prompt(prompt: str, max_len: int = 60) -> str:
+    if len(prompt) <= max_len:
+        return prompt
+    return prompt[: max_len - 1].rstrip() + "\u2026"
 
 
 def _load_task_file(path: str) -> Task:
-    """Load a task from a YAML or JSON file."""
-    p = Path(path)
-    text = p.read_text()
-    if p.suffix in (".yaml", ".yml"):
+    file_path = Path(path)
+    text = file_path.read_text()
+    if file_path.suffix in (".yaml", ".yml"):
         data = yaml.safe_load(text)
-    elif p.suffix == ".json":
+    elif file_path.suffix == ".json":
         data = json.loads(text)
     else:
-        # Treat as plain text prompt
         return Task(prompt=text.strip())
 
-    # Strip metadata fields that aren't part of the Task model
-    task_data = {k: v for k, v in data.items() if k != "meta"}
+    task_data = {key: value for key, value in data.items() if key != "meta"}
     return Task(**task_data)
 
 
-def _slugify(text: str, max_len: int = 40) -> str:
-    """Turn a prompt into a short filesystem-safe slug.
+def _resolve_model_display(backend: str, backend_kwargs: dict[str, Any]) -> str:
+    requested = backend_kwargs.get("model")
+    if requested:
+        return str(requested)
+    if backend == "ollama":
+        from broadside_ai.backends.ollama import _DEFAULT_MODEL
 
-    "Write a battle plan for a naval ambush" → "write-a-battle-plan-for-a-naval-ambush"
-    """
+        return f"{_DEFAULT_MODEL} (default)"
+    if backend == "anthropic":
+        return "claude-sonnet-4-20250514 (default)"
+    if backend == "openai":
+        return "gpt-4o-mini (default)"
+    return "(backend default)"
+
+
+def _resolve_model_name(
+    gathered: GatherResult,
+    backend: str,
+    backend_kwargs: dict[str, Any],
+) -> str:
+    if gathered.results:
+        return gathered.results[0].model
+    requested = backend_kwargs.get("model")
+    return str(requested) if requested else _resolve_model_display(backend, backend_kwargs)
+
+
+def _slugify(text: str, max_len: int = 40) -> str:
     import re
 
     slug = text.lower().strip()
-    slug = re.sub(r"[^\w\s-]", "", slug)  # drop punctuation
-    slug = re.sub(r"[\s_]+", "-", slug)  # spaces/underscores → hyphens
-    slug = re.sub(r"-+", "-", slug).strip("-")  # collapse runs
+    slug = re.sub(r"[^\w\s-]", "", slug)
+    slug = re.sub(r"[\s_]+", "-", slug)
+    slug = re.sub(r"-+", "-", slug).strip("-")
     return slug[:max_len].rstrip("-")
 
 
 def _model_dir_name(results: list[Any]) -> str:
-    """Extract model name from results and make it directory-safe.
-
-    "nemotron-3-super:cloud" → "nemotron-3-super-cloud"
-    "gpt-oss:120b-cloud" → "gpt-oss-120b-cloud"
-    """
-    if results:
-        model = getattr(results[0], "model", None) or "unknown"
-    else:
-        model = "unknown"
-    return model.replace(":", "-").replace("/", "-")
+    model = getattr(results[0], "model", None) if results else None
+    model_name = model or "unknown"
+    return str(model_name).replace(":", "-").replace("/", "-")
 
 
 def _build_run_dir(output_dir: Path, model_name: str, topic: str) -> Path:
-    """Build the nested output path: output_dir / model / topic_timestamp.
-
-    Example: broadside_ai_output/gemma3-1b/naval-ambush_20260329_143022/
-    """
     stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     run_name = f"{topic}_{stamp}" if topic else stamp
     run_dir = output_dir / model_name / run_name
@@ -473,139 +425,51 @@ def _build_run_dir(output_dir: Path, model_name: str, topic: str) -> Path:
     return run_dir
 
 
-def _save_results(result: Any, task: Task, output_dir: Path) -> None:
-    """Save synthesis + raw outputs to nested directories.
-
-    Structure:
-        broadside_ai_output/
-            gemma3-1b/
-                naval-ambush_20260329_143022/
-                    result.json
-                    synthesis.txt
-                    agent_1.txt
-                    agent_2.txt
-                    agent_3.txt
-    """
-    from broadside_ai.synthesize import Synthesis
-
-    assert isinstance(result, Synthesis)
-
+def _save_results(result: Synthesis, task: Task, output_dir: Path) -> Path:
     model_dir = _model_dir_name(result.gather.results)
-    topic = _slugify(task.prompt)
-    run_dir = _build_run_dir(output_dir, model_dir, topic)
-
-    # Full result as JSON (machine-readable)
-    # Explicit UTF-8 so Windows doesn't choke on emoji in LLM output
+    run_dir = _build_run_dir(output_dir, model_dir, _slugify(task.prompt))
+    payload = {
+        "prompt": task.prompt,
+        "model": model_dir,
+        "requested_strategy": result.requested_strategy,
+        "strategy": result.strategy,
+        "synthesis": result.result,
+        "parsed_result": result.parsed_result,
+        "raw_outputs": result.raw_outputs,
+        "stats": {
+            "n_requested": result.gather.n_requested,
+            "n_completed": result.gather.n_completed,
+            "n_failed": result.gather.n_failed,
+            "n_parsed": result.gather.n_parsed,
+            "total_tokens": result.total_tokens(),
+            "scatter_tokens": result.gather.total_tokens,
+            "synthesis_tokens": result.synthesis_tokens,
+            "wall_clock_ms": round(result.gather.wall_clock_ms, 1),
+        },
+    }
     (run_dir / "result.json").write_text(
-        json.dumps(
-            {
-                "prompt": task.prompt,
-                "model": model_dir,
-                "synthesis": result.result,
-                "strategy": result.strategy,
-                "raw_outputs": result.raw_outputs,
-                "stats": {
-                    "n_completed": result.gather.n_completed,
-                    "n_failed": result.gather.n_failed,
-                    "total_tokens": result.total_tokens(),
-                    "scatter_tokens": result.gather.total_tokens,
-                    "synthesis_tokens": result.synthesis_tokens,
-                    "wall_clock_ms": round(result.gather.wall_clock_ms, 1),
-                },
-            },
-            indent=2,
-            ensure_ascii=False,
-        ),
+        json.dumps(payload, indent=2, ensure_ascii=False),
         encoding="utf-8",
     )
-
-    # Synthesis as plain text (easy to open and copy)
     (run_dir / "synthesis.txt").write_text(result.result, encoding="utf-8")
-
-    # Each raw agent output
-    for i, text in enumerate(result.raw_outputs):
-        (run_dir / f"agent_{i + 1}.txt").write_text(text, encoding="utf-8")
-
-    # Relative path for cleaner display
-    try:
-        display_path = run_dir.relative_to(Path.cwd())
-    except ValueError:
-        display_path = run_dir
-    console.print(f"\n[dim]Saved to {display_path}/[/dim]")
+    for index, text in enumerate(result.raw_outputs, start=1):
+        (run_dir / f"agent_{index}.txt").write_text(text, encoding="utf-8")
+    return run_dir
 
 
-def _save_raw(texts: list[str], task: Task, output_dir: Path, model_hint: str = "unknown") -> None:
-    """Save raw outputs (no synthesis) to nested directories."""
-    model_dir = model_hint.replace(":", "-").replace("/", "-")
-    topic = _slugify(task.prompt)
-    run_dir = _build_run_dir(output_dir, model_dir, topic)
-
-    for i, text in enumerate(texts):
-        (run_dir / f"agent_{i + 1}.txt").write_text(text, encoding="utf-8")
-
+def _save_raw(texts: list[str], task: Task, output_dir: Path, model_hint: str = "unknown") -> Path:
+    run_dir = _build_run_dir(output_dir, model_hint, _slugify(task.prompt))
+    for index, text in enumerate(texts, start=1):
+        (run_dir / f"agent_{index}.txt").write_text(text, encoding="utf-8")
     (run_dir / "raw.json").write_text(
-        json.dumps(
-            {"prompt": task.prompt, "model": model_dir, "outputs": texts},
-            indent=2,
-            ensure_ascii=False,
-        ),
+        json.dumps({"prompt": task.prompt, "model": model_hint, "outputs": texts}, indent=2),
         encoding="utf-8",
     )
-
-    try:
-        display_path = run_dir.relative_to(Path.cwd())
-    except ValueError:
-        display_path = run_dir
-    console.print(f"\n[dim]Saved to {display_path}/[/dim]")
+    return run_dir
 
 
-def _show_raw(texts: list[str], json_out: bool) -> None:
-    if json_out:
-        console.print_json(json.dumps({"outputs": texts}))
-    else:
-        for i, text in enumerate(texts):
-            console.print(Panel(text, title=f"Output {i + 1}"))
-
-
-def _show_json(result: Any) -> None:
-    from broadside_ai.synthesize import Synthesis
-
-    assert isinstance(result, Synthesis)
-    console.print_json(
-        json.dumps(
-            {
-                "synthesis": result.result,
-                "strategy": result.strategy,
-                "n_outputs": len(result.raw_outputs),
-                "total_tokens": result.total_tokens(),
-                "wall_clock_ms": round(result.gather.wall_clock_ms, 1),
-            }
-        )
-    )
-
-
-def _show_rich(result: Any, total_wall_ms: float | None = None) -> None:
-    from broadside_ai.synthesize import Synthesis
-
-    assert isinstance(result, Synthesis)
-
-    # Synthesis output
-    console.print(
-        Panel(
-            result.result,
-            title="[bold green]Synthesis[/bold green]",
-            border_style="green",
-            padding=(1, 2),
-        )
-    )
-
-    # Stats bar
-    wall = total_wall_ms or result.gather.wall_clock_ms
-    stats_parts = [
-        f"[bold]{result.gather.n_completed}[/bold] agents",
-        f"[bold]{result.total_tokens():,}[/bold] tokens",
-        f"[bold]{wall / 1000:.1f}s[/bold] total",
-        f"strategy: [bold]{result.strategy}[/bold]",
-    ]
-    sep = " \u2502 "
-    console.print(f"\n[dim]{sep.join(stats_parts)}[/dim]")
+def _format_plain_raw(texts: list[str]) -> str:
+    chunks = []
+    for index, text in enumerate(texts, start=1):
+        chunks.append(f"--- Output {index} ---\n{text}")
+    return "\n\n".join(chunks)

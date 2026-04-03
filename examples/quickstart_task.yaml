@@ -1,2 +1,2 @@
-# Run with: python -m broadside_ai run examples/quickstart_task.yaml --n 3
+# Run with: broadside-ai run examples/quickstart_task.yaml --n 3
 prompt: "Write a one-paragraph pitch for a CLI tool that helps developers manage dotfiles."

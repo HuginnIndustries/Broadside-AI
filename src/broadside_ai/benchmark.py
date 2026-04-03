@@ -1,8 +1,8 @@
-"""Benchmark harness — measure what matters: latency, cost, diversity.
+"""Benchmark harness - measure what matters: latency, cost, diversity.
 
 Three metrics, honestly reported:
 1. Latency: wall-clock time for scatter (parallel) vs. sequential
-2. Cost: actual token counts (scatter multiplies by ~N+1 including synthesis)
+2. Cost: actual token counts (scatter multiplies by about N+1 including synthesis)
 3. Diversity: how different are the N outputs from each other (Jaccard distance)
 """
 
@@ -33,19 +33,15 @@ class BenchmarkResult:
     backend: str
     model: str = ""
 
-    # Scatter (parallel) metrics
     scatter_wall_ms: float = 0.0
     scatter_total_tokens: int = 0
     synthesis_tokens: int = 0
 
-    # Sequential baseline metrics
     sequential_wall_ms: float = 0.0
     sequential_total_tokens: int = 0
 
-    # Diversity (0.0 = identical outputs, 1.0 = completely different)
     diversity_score: float = 0.0
 
-    # Raw data for transparency
     scatter_outputs: list[str] = field(default_factory=list)
     sequential_output: str = ""
 
@@ -65,7 +61,7 @@ class BenchmarkResult:
         """Cost multiplier: total scatter+synthesis tokens / single sequential call tokens."""
         if self.sequential_total_tokens == 0:
             return 0.0
-        # Compare against ONE sequential call, not N — that's the real
+        # Compare against ONE sequential call, not N - that is the real
         # cost question: "how much more do I pay for scatter vs just asking once?"
         single_call_tokens = self.sequential_total_tokens / self.n if self.n else 0
         if single_call_tokens == 0:
@@ -102,7 +98,7 @@ class BenchmarkResult:
 def _jaccard_distance(a: str, b: str) -> float:
     """Simple word-level Jaccard distance between two texts.
 
-    Not a perfect diversity metric, but it's dependency-free and gives
+    Not a perfect diversity metric, but it is dependency-free and gives
     a reasonable signal. Embedding-based distance is a future upgrade.
     """
     words_a = set(a.lower().split())
@@ -143,7 +139,6 @@ async def benchmark_task(
 
     result = BenchmarkResult(task_name=task_name, n=n, backend=backend)
 
-    # --- Scatter run (always parallel) ---
     t0 = time.perf_counter()
     scatter_results = await scatter(
         task=task,
@@ -157,7 +152,6 @@ async def benchmark_task(
 
     gathered = gather(scatter_results, wall_clock_ms=scatter_wall, n_requested=n)
 
-    # Grab model name from first result
     if scatter_results:
         result.model = scatter_results[0].model
 
@@ -165,7 +159,6 @@ async def benchmark_task(
     result.scatter_total_tokens = gathered.total_tokens
     result.scatter_outputs = gathered.texts
 
-    # --- Synthesis (measured separately so we can report its cost) ---
     from broadside_ai.synthesize import synthesize
 
     synthesis = await synthesize(
@@ -176,9 +169,8 @@ async def benchmark_task(
     )
     result.synthesis_tokens = synthesis.synthesis_tokens
 
-    # --- Sequential baseline ---
-    # Run the same task N times, one at a time. This is what you'd do
-    # without Broadside: prompt the model N times and pick the best.
+    # Run the same task N times, one at a time. This is what you would do
+    # without Broadside-AI: prompt the model N times and pick the best.
     llm = get_backend(backend, **bk)
     prompt = task.render_prompt()
     t0 = time.perf_counter()
@@ -190,7 +182,6 @@ async def benchmark_task(
     result.sequential_total_tokens = sum(r.total_tokens for r in seq_results)
     result.sequential_output = seq_results[0].text if seq_results else ""
 
-    # --- Diversity ---
     result.diversity_score = measure_diversity(result.scatter_outputs)
 
     return result
@@ -204,18 +195,8 @@ async def run_benchmark_suite(
     output_dir: str | None = None,
     on_task_start: Any = None,
     on_task_done: Any = None,
-) -> list[BenchmarkResult]:
-    """Run benchmarks across multiple tasks and optionally save results.
-
-    Args:
-        tasks: List of (name, Task) tuples.
-        n: Agents per scatter.
-        backend: LLM backend.
-        backend_kwargs: Backend config.
-        output_dir: If set, write JSON and markdown results to this directory.
-        on_task_start: Optional callback(task_name, index, total) called before each task.
-        on_task_done: Optional callback(result, index, total) called after each task.
-    """
+) -> list[BenchmarkResult] | tuple[list[BenchmarkResult], Path]:
+    """Run benchmarks across multiple tasks and optionally save results."""
     results = []
     total = len(tasks)
     for i, (name, task) in enumerate(tasks):
@@ -237,7 +218,7 @@ async def run_benchmark_suite(
     if output_dir:
         run_dir = _build_run_dir(output_dir, results, backend, backend_kwargs)
         _save_benchmark_results(results, run_dir, n, backend, backend_kwargs)
-        return results, run_dir  # type: ignore[return-value]
+        return results, run_dir
 
     return results
 
@@ -248,11 +229,7 @@ def _build_run_dir(
     backend: str,
     backend_kwargs: dict[str, Any] | None,
 ) -> Path:
-    """Create a descriptive run directory.
-
-    Structure: benchmarks/results/{model}_{n}agents_{timestamp}/
-    Example:   benchmarks/results/nemotron-3-super_3agents_20260330_044600/
-    """
+    """Create a descriptive run directory."""
     model = results[0].model if results else "unknown"
     model_safe = model.replace(":", "-").replace("/", "-")
     n = results[0].n if results else 3
@@ -264,19 +241,19 @@ def _build_run_dir(
 
 
 def _get_system_info() -> dict[str, Any]:
-    """Collect hardware/OS info so local benchmark results have context."""
+    """Collect hardware and OS info so local benchmark results have context."""
     info: dict[str, Any] = {
         "os": f"{platform.system()} {platform.release()}",
         "python": platform.python_version(),
         "cpu": platform.processor() or "unknown",
         "cpu_count": os.cpu_count(),
     }
-    # Try to get RAM — works on most platforms without extra deps
+    # Try to get RAM - works on most platforms without extra dependencies.
     try:
         if platform.system() == "Windows":
             import ctypes
 
-            kernel32 = ctypes.windll.kernel32  # type: ignore[attr-defined]
+            kernel32 = ctypes.windll.kernel32
 
             class MEMORYSTATUSEX(ctypes.Structure):
                 _fields_ = [
@@ -296,7 +273,7 @@ def _get_system_info() -> dict[str, Any]:
             kernel32.GlobalMemoryStatusEx(ctypes.byref(stat))
             info["ram_gb"] = round(stat.ullTotalPhys / (1024**3), 1)
         else:
-            mem_bytes = os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_PHYS_PAGES")
+            mem_bytes = os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_PHYS_PAGES")  # type: ignore[attr-defined]
             info["ram_gb"] = round(mem_bytes / (1024**3), 1)
     except Exception:
         pass
@@ -315,7 +292,6 @@ def _save_benchmark_results(
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     system_info = _get_system_info()
 
-    # --- JSON (machine-readable) ---
     payload = {
         "metadata": {
             "timestamp": timestamp,
@@ -332,28 +308,23 @@ def _save_benchmark_results(
         encoding="utf-8",
     )
 
-    # --- Per-task detail files ---
     for r in results:
         task_dir = run_dir / r.task_name
         task_dir.mkdir(exist_ok=True)
 
-        # Scatter outputs
         for i, text in enumerate(r.scatter_outputs):
             (task_dir / f"agent_{i + 1}.txt").write_text(text, encoding="utf-8")
 
-        # Sequential baseline output
         if r.sequential_output:
             (task_dir / "sequential_baseline.txt").write_text(
                 r.sequential_output, encoding="utf-8"
             )
 
-        # Task summary
         (task_dir / "summary.json").write_text(
             json.dumps(r.summary(), indent=2, ensure_ascii=False),
             encoding="utf-8",
         )
 
-    # --- Markdown report (human-readable, embeddable in docs) ---
     lines = [
         "# Benchmark Results",
         "",
@@ -368,8 +339,11 @@ def _save_benchmark_results(
         "",
         "## Results",
         "",
-        "| Task | Parallel | Sequential | Speedup | Tokens | Cost vs 1 | Diversity |",
-        "|------|----------|------------|---------|--------|-----------|-----------|",
+        (
+            "| Task | Parallel | Sequential | Speedup | Tokens (scatter+synth) "
+            "| Cost vs 1 call | Diversity |"
+        ),
+        "|------|----------|------------|---------|----------------------|----------------|-----------|",
     ]
 
     for r in results:
@@ -383,7 +357,6 @@ def _save_benchmark_results(
             f"| {r.diversity_score:.3f} |"
         )
 
-    # Averages
     avg_speedup = sum(r.speedup for r in results) / len(results) if results else 0
     avg_token_mult = sum(r.token_multiplier for r in results) / len(results) if results else 0
     avg_diversity = sum(r.diversity_score for r in results) / len(results) if results else 0
@@ -407,8 +380,8 @@ def _save_benchmark_results(
             "",
             f"**Cost vs 1 call** = total tokens (scatter + synthesis) / tokens for a "
             f"single LLM call. This is the real cost question: how much more do you "
-            f"pay for scatter/gather vs just prompting once? Scatter alone costs ~{n}x; "
-            f"the LLM synthesis strategy adds another ~1x on top.",
+            f"pay for scatter/gather vs just prompting once? Scatter alone costs about {n}x; "
+            f"the LLM synthesis strategy adds another about 1x on top.",
             "",
             "**Diversity** = average pairwise Jaccard distance (word-level) across "
             "scatter outputs. 0.0 = identical, 1.0 = completely different. Higher "

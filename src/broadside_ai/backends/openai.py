@@ -1,8 +1,4 @@
-"""OpenAI-compatible backend — requires `pip install broadside-ai[openai]`.
-
-Works with OpenAI, Azure OpenAI, and any API that implements the
-OpenAI chat completions interface (vLLM, Together, Groq, etc.).
-"""
+"""OpenAI-compatible backend - requires ``pip install broadside-ai[openai]``."""
 
 from __future__ import annotations
 
@@ -11,11 +7,11 @@ from typing import Any
 
 try:
     import openai
-except ImportError as e:
+except ImportError as exc:
     raise ImportError(
         "OpenAI backend requires the openai package. "
         "Install it with: pip install broadside-ai[openai]"
-    ) from e
+    ) from exc
 
 from broadside_ai.backends import register
 from broadside_ai.backends.base import AgentResult, Backend
@@ -54,8 +50,7 @@ class OpenAIBackend(Backend):
 
     async def complete(self, prompt: str, **kwargs: Any) -> AgentResult:
         t0 = time.perf_counter()
-
-        resp = await self._client.chat.completions.create(
+        response = await self._client.chat.completions.create(
             model=kwargs.pop("model", self.model),
             max_tokens=kwargs.pop("max_tokens", self.max_tokens),
             messages=[{"role": "user", "content": prompt}],
@@ -63,10 +58,9 @@ class OpenAIBackend(Backend):
         )
 
         latency = (time.perf_counter() - t0) * 1000
-        choice = resp.choices[0] if resp.choices else None
+        choice = response.choices[0] if response.choices else None
         text = choice.message.content or "" if choice else ""
-
-        usage = resp.usage
+        usage = response.usage
         tokens_in = usage.prompt_tokens if usage else 0
         tokens_out = usage.completion_tokens if usage else 0
 
@@ -75,7 +69,7 @@ class OpenAIBackend(Backend):
             tokens_in=tokens_in,
             tokens_out=tokens_out,
             latency_ms=latency,
-            model=resp.model or self.model,
+            model=response.model or self.model,
             backend="openai",
         )
 

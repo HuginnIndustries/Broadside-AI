@@ -1,4 +1,4 @@
-"""Anthropic backend — requires `pip install broadside-ai[anthropic]`."""
+"""Anthropic backend - requires ``pip install broadside-ai[anthropic]``."""
 
 from __future__ import annotations
 
@@ -7,11 +7,11 @@ from typing import Any
 
 try:
     import anthropic
-except ImportError as e:
+except ImportError as exc:
     raise ImportError(
         "Anthropic backend requires the anthropic package. "
         "Install it with: pip install broadside-ai[anthropic]"
-    ) from e
+    ) from exc
 
 from broadside_ai.backends import register
 from broadside_ai.backends.base import AgentResult, Backend
@@ -46,8 +46,7 @@ class AnthropicBackend(Backend):
 
     async def complete(self, prompt: str, **kwargs: Any) -> AgentResult:
         t0 = time.perf_counter()
-
-        msg = await self._client.messages.create(
+        message = await self._client.messages.create(
             model=kwargs.pop("model", self.model),
             max_tokens=kwargs.pop("max_tokens", self.max_tokens),
             messages=[{"role": "user", "content": prompt}],
@@ -55,14 +54,13 @@ class AnthropicBackend(Backend):
         )
 
         latency = (time.perf_counter() - t0) * 1000
-        text = msg.content[0].text if msg.content else ""
-
+        text = message.content[0].text if message.content else ""
         return AgentResult(
             text=text,
-            tokens_in=msg.usage.input_tokens,
-            tokens_out=msg.usage.output_tokens,
+            tokens_in=message.usage.input_tokens,
+            tokens_out=message.usage.output_tokens,
             latency_ms=latency,
-            model=msg.model,
+            model=message.model,
             backend="anthropic",
         )
 

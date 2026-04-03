@@ -1,18 +1,4 @@
-"""Weighted merge synthesis — best for scored recommendations.
-
-Aggregates structured outputs field-by-field:
-- Numeric fields: confidence-weighted average
-- String fields: majority vote
-- List fields: union of items appearing in majority of outputs
-
-Requires structured outputs (output_schema on the task). Falls back to
-LLM synthesis if fewer than 2 outputs parsed successfully.
-
-This is the right strategy when:
-- The task produces structured data (JSON with typed fields)
-- Agents return confidence scores alongside their answers
-- You want a principled numeric aggregation, not just text blending
-"""
+"""Weighted merge synthesis for structured outputs."""
 
 from __future__ import annotations
 
@@ -30,123 +16,101 @@ async def synthesize_weighted_merge(
     backend_kwargs: dict[str, Any] | None = None,
     model: str | None = None,
 ) -> Synthesis:
-    """Merge structured outputs using confidence-weighted aggregation.
-
-    Falls back to LLM synthesis when structured data is unavailable.
-    On the happy path, does zero LLM calls — pure algorithmic merge.
-    """
-    valid = [p for p in gathered.parsed_outputs if p is not None]
-
+    """Merge structured outputs using confidence-weighted aggregation."""
+    valid = [parsed for parsed in gathered.parsed_outputs if parsed is not None]
     if len(valid) < 2:
-        # Not enough structured data — fall back to LLM synthesis
         from broadside_ai.synthesize import _synthesize_llm
 
-        return await _synthesize_llm(gathered, backend, backend_kwargs, model)
+        fallback = await _synthesize_llm(gathered, backend, backend_kwargs, model)
+        fallback.requested_strategy = "weighted_merge"
+        return fallback
 
-    # Extract confidence weights (if present), else uniform
     weights = _extract_weights(valid)
-
-    # Merge field by field
     merged = _merge_fields(valid, weights)
-
-    # Build human-readable summary
-    text = _format_summary(merged, valid, weights)
+    text = _format_summary(merged, valid)
 
     return Synthesis(
         result=text,
         strategy="weighted_merge",
         gather=gathered,
         raw_outputs=gathered.texts,
-        synthesis_tokens=0,  # no LLM calls
+        synthesis_tokens=0,
         parsed_result=merged,
+        requested_strategy="weighted_merge",
     )
 
 
 def _extract_weights(outputs: list[dict[str, Any]]) -> list[float]:
-    """Extract confidence scores as weights, or use uniform weights."""
     weights = []
-    for out in outputs:
-        conf = out.get("confidence")
-        if isinstance(conf, (int, float)) and conf > 0:
-            weights.append(float(conf))
+    for output in outputs:
+        confidence = output.get("confidence")
+        if isinstance(confidence, (int, float)) and confidence > 0:
+            weights.append(float(confidence))
         else:
             weights.append(1.0)
 
-    # Normalize to sum to 1
     total = sum(weights)
     if total > 0:
-        weights = [w / total for w in weights]
-    else:
-        n = len(outputs)
-        weights = [1.0 / n] * n
-
-    return weights
+        return [weight / total for weight in weights]
+    return [1.0 / len(outputs)] * len(outputs)
 
 
 def _merge_fields(outputs: list[dict[str, Any]], weights: list[float]) -> dict[str, Any]:
-    """Merge each field using type-appropriate aggregation."""
-    # Collect all keys across outputs
     all_keys: set[str] = set()
-    for out in outputs:
-        all_keys.update(out.keys())
+    for output in outputs:
+        all_keys.update(output.keys())
 
-    # Don't merge the confidence field itself — it's metadata
     all_keys.discard("confidence")
 
     merged: dict[str, Any] = {}
     for key in sorted(all_keys):
-        values = [(out[key], w) for out, w in zip(outputs, weights) if key in out]
-        if not values:
-            continue
+        values = [
+            (output[key], weight) for output, weight in zip(outputs, weights) if key in output
+        ]
+        raw_values = [value for value, _ in values]
+        value_weights = [weight for _, weight in values]
 
-        raw_vals = [v for v, _ in values]
-        val_weights = [w for _, w in values]
-
-        if all(isinstance(v, (int, float)) for v in raw_vals):
-            merged[key] = _merge_numeric(raw_vals, val_weights)
-        elif all(isinstance(v, str) for v in raw_vals):
-            merged[key] = _merge_categorical([str(v) for v in raw_vals])
-        elif all(isinstance(v, list) for v in raw_vals):
-            merged[key] = _merge_lists([list(v) for v in raw_vals])
+        if all(isinstance(value, (int, float)) for value in raw_values):
+            merged[key] = _merge_numeric(raw_values, value_weights)
+        elif all(isinstance(value, str) for value in raw_values):
+            merged[key] = _merge_categorical([str(value) for value in raw_values])
+        elif all(isinstance(value, list) for value in raw_values):
+            merged[key] = _merge_lists([list(value) for value in raw_values])
         else:
-            # Mixed types or unsupported — take the most common
-            merged[key] = _merge_categorical([str(v) for v in raw_vals])
+            merged[key] = _merge_categorical([str(value) for value in raw_values])
 
     return merged
 
 
 def _merge_numeric(values: list[Any], weights: list[float]) -> float:
-    """Weighted average of numeric values."""
     total_weight = sum(weights)
     if total_weight == 0:
         return float(sum(values) / len(values))
-    return round(float(sum(v * w for v, w in zip(values, weights)) / total_weight), 4)
+    return round(
+        float(sum(value * weight for value, weight in zip(values, weights)) / total_weight),
+        4,
+    )
 
 
 def _merge_categorical(values: list[str]) -> str:
-    """Majority vote for string values."""
     from collections import Counter
 
-    counts = Counter(values)
-    return counts.most_common(1)[0][0]
+    return Counter(values).most_common(1)[0][0]
 
 
 def _merge_lists(values: list[list[Any]]) -> list[Any]:
-    """Keep items that appear in a majority of outputs."""
     from collections import Counter
 
-    n = len(values)
-    threshold = n / 2
     all_items: list[Any] = []
-    for lst in values:
-        all_items.extend(lst)
-    counts = Counter(str(item) for item in all_items)
+    for value_list in values:
+        all_items.extend(value_list)
 
-    # Build ordered result: keep items appearing in majority, preserve first-seen order
+    threshold = len(values) / 2
+    counts = Counter(str(item) for item in all_items)
     seen: set[str] = set()
     result: list[Any] = []
-    for lst in values:
-        for item in lst:
+    for value_list in values:
+        for item in value_list:
             key = str(item)
             if key not in seen and counts[key] >= threshold:
                 seen.add(key)
@@ -154,34 +118,10 @@ def _merge_lists(values: list[list[Any]]) -> list[Any]:
     return result
 
 
-def _format_summary(
-    merged: dict[str, Any],
-    outputs: list[dict[str, Any]],
-    weights: list[float],
-) -> str:
-    """Build a human-readable summary of the merge."""
-    n = len(outputs)
-    has_confidence = any("confidence" in out for out in outputs)
-
+def _format_summary(merged: dict[str, Any], outputs: list[dict[str, Any]]) -> str:
     lines = [
-        f"WEIGHTED MERGE ({n} agents)",
-        f"Weighting: {'confidence-based' if has_confidence else 'uniform'}",
-        "",
+        f"WEIGHTED MERGE ({len(outputs)} agents)",
         "MERGED RESULT:",
         json.dumps(merged, indent=2),
-        "",
-        "FIELD DETAILS:",
     ]
-
-    for key, value in merged.items():
-        agent_vals = [out.get(key) for out in outputs if key in out]
-        unique = len(set(str(v) for v in agent_vals))
-        if unique == 1:
-            lines.append(f"  {key}: {value} (unanimous)")
-        elif isinstance(value, float):
-            vals_str = ", ".join(str(v) for v in agent_vals)
-            lines.append(f"  {key}: {value} (weighted avg of [{vals_str}])")
-        else:
-            lines.append(f"  {key}: {value} ({unique} distinct values, majority wins)")
-
     return "\n".join(lines)

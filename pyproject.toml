@@ -5,14 +5,14 @@ build-backend = "hatchling.build"
 [project]
 name = "broadside-ai"
 version = "0.1.0"
-description = "A Python framework for parallel LLM agent orchestration using scatter/gather instead of hierarchy."
+description = "CLI-first scatter/gather orchestration for parallel LLM aggregation in scripts, CI, and automation."
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
 authors = [
     { name = "James Sesler", email = "james.sesler@pm.me" },
 ]
-keywords = ["ai", "agents", "llm", "scatter-gather", "parallel", "orchestration"]
+keywords = ["ai", "agents", "llm", "scatter-gather", "parallel", "orchestration", "cli", "automation"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -39,24 +39,42 @@ anthropic = ["anthropic>=0.40.0"]
 openai = ["openai>=1.50.0"]
 all = ["anthropic>=0.40.0", "openai>=1.50.0"]
 dev = [
+    "build>=1.2.2",
     "pytest>=8.0.0",
     "pytest-asyncio>=0.24.0",
     "ruff>=0.8.0",
     "mypy>=1.13.0",
-    "types-PyYAML>=6.0",
+    "twine>=6.1.0",
 ]
 
 [project.scripts]
 broadside-ai = "broadside_ai.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/jsesler/broadside"
-Documentation = "https://jsesler.github.io/broadside"
-Repository = "https://github.com/jsesler/broadside"
-Issues = "https://github.com/jsesler/broadside/issues"
+Homepage = "https://github.com/HuginnIndustries/Broadside-AI"
+Documentation = "https://github.com/HuginnIndustries/Broadside-AI#readme"
+Repository = "https://github.com/HuginnIndustries/Broadside-AI"
+Issues = "https://github.com/HuginnIndustries/Broadside-AI/issues"
+Changelog = "https://github.com/HuginnIndustries/Broadside-AI/releases"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/broadside_ai"]
+
+[tool.hatch.build]
+exclude = [
+    "/.pytest_cache",
+    "/.ruff_cache",
+    "/.mypy_cache",
+    "/broadside_ai_output",
+    "/build",
+    "/dist",
+    "/pytest-cache-files-*",
+    "/benchmarks/results",
+    "/Research Results*.pdf",
+    "/python",
+    "**/__pycache__",
+    "**/*.py[cod]",
+]
 
 [tool.ruff]
 target-version = "py310"
@@ -64,16 +82,17 @@ line-length = 99
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]
-ignore = ["N818"]  # BudgetExceeded is the established name
+ignore = ["N818"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+addopts = "-p no:cacheprovider"
 
 [tool.mypy]
 python_version = "3.10"
 strict = true
 
 [[tool.mypy.overrides]]
-module = ["anthropic", "openai"]
+module = ["openai", "openai.*", "yaml"]
 ignore_missing_imports = true

@@ -1,7 +1,4 @@
-"""Task file validator — validates YAML task definitions against the schema.
-
-Usage: python -m broadside_ai.task_validator tasks/my_task.yaml
-"""
+"""Task file validator for Broadside-AI."""
 
 from __future__ import annotations
 
@@ -17,35 +14,32 @@ VALID_STRATEGIES = {"llm", "consensus", "voting", "weighted_merge"}
 
 
 def validate_task_file(path: str) -> list[str]:
-    """Validate a YAML task file. Returns list of errors (empty = valid)."""
+    """Validate a YAML task file. Returns a list of human-readable errors."""
     errors: list[str] = []
-    p = Path(path)
+    file_path = Path(path)
 
-    if not p.exists():
+    if not file_path.exists():
         return [f"File not found: {path}"]
 
     try:
-        data = yaml.safe_load(p.read_text())
-    except yaml.YAMLError as e:
-        return [f"Invalid YAML: {e}"]
+        data = yaml.safe_load(file_path.read_text())
+    except yaml.YAMLError as exc:
+        return [f"Invalid YAML: {exc}"]
 
     if not isinstance(data, dict):
         return ["Task file must be a YAML mapping"]
 
-    # Validate the Task fields
     if "prompt" not in data:
         errors.append("Missing required field: prompt")
     elif not isinstance(data["prompt"], str) or len(data["prompt"].strip()) == 0:
         errors.append("prompt must be a non-empty string")
 
-    # Try to construct the Task object
-    task_fields = {k: v for k, v in data.items() if k != "meta"}
+    task_fields = {key: value for key, value in data.items() if key != "meta"}
     try:
         Task(**task_fields)
-    except Exception as e:
-        errors.append(f"Task validation failed: {e}")
+    except Exception as exc:
+        errors.append(f"Task validation failed: {exc}")
 
-    # Validate metadata if present
     meta = data.get("meta", {})
     if meta:
         if "name" not in meta:
@@ -58,12 +52,13 @@ def validate_task_file(path: str) -> list[str]:
                 f"not in {VALID_STRATEGIES}"
             )
         if "recommended_n" in meta:
-            n = meta["recommended_n"]
-            if not isinstance(n, int) or n < 1:
+            recommended_n = meta["recommended_n"]
+            if not isinstance(recommended_n, int) or recommended_n < 1:
                 errors.append("meta.recommended_n must be a positive integer")
-            elif n > 10:
+            elif recommended_n > 10:
                 errors.append(
-                    f"meta.recommended_n is {n}. Performance plateaus at 3-5. Are you sure?"
+                    f"meta.recommended_n is {recommended_n}. "
+                    "Performance plateaus at 3-5. Are you sure?"
                 )
 
     return errors
@@ -71,7 +66,7 @@ def validate_task_file(path: str) -> list[str]:
 
 def main() -> None:
     if len(sys.argv) < 2:
-        print("Usage: python -m broadside_ai.task_validator <task_file.yaml> [...]")
+        print("Usage: broadside-ai validate-task <task_file.yaml> [...]")
         sys.exit(1)
 
     all_valid = True
@@ -79,8 +74,8 @@ def main() -> None:
         errors = validate_task_file(path)
         if errors:
             print(f"FAIL: {path}")
-            for err in errors:
-                print(f"  - {err}")
+            for error in errors:
+                print(f"  - {error}")
             all_valid = False
         else:
             print(f"OK: {path}")

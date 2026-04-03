@@ -27,7 +27,7 @@
 ## Reproduce
 
 ```bash
-pip install broadside
+pip install broadside-ai
 python benchmarks/suite.py
 ```
 
