@@ -1,9 +1,7 @@
-name: Publish
+name: Publish TestPyPI
 
 on:
-  release:
-    types:
-      - published
+  workflow_dispatch:
 
 jobs:
   build:
@@ -33,7 +31,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: python-dist
+          name: python-dist-testpypi
           path: dist/
 
   publish:
@@ -43,14 +41,16 @@ jobs:
       id-token: write
 
     environment:
-      name: pypi
+      name: testpypi
 
     steps:
       - name: Download distribution artifacts
         uses: actions/download-artifact@v4
         with:
-          name: python-dist
+          name: python-dist-testpypi
           path: dist/
 
-      - name: Publish to PyPI
+      - name: Publish to TestPyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/

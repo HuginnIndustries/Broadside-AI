@@ -65,6 +65,7 @@ exclude = [
     "/.pytest_cache",
     "/.ruff_cache",
     "/.mypy_cache",
+    "/.test-tmp",
     "/broadside_ai_output",
     "/build",
     "/dist",

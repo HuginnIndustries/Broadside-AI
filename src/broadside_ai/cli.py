@@ -27,6 +27,7 @@ from broadside_ai.task_validator import validate_task_file
 
 console = Console()
 _OUTPUT_DIR = Path("broadside_ai_output")
+_JSON_OUTPUT_SCHEMA_VERSION = 1
 
 
 @dataclass
@@ -49,6 +50,7 @@ class RunArtifacts:
         parsed_result = self.synthesis.parsed_result if self.synthesis else None
         raw_outputs = self.synthesis.raw_outputs if self.synthesis else self.gather.texts
         return {
+            "schema_version": _JSON_OUTPUT_SCHEMA_VERSION,
             "status": "ok",
             "prompt": self.task.prompt,
             "backend": self.backend,
@@ -429,6 +431,7 @@ def _save_results(result: Synthesis, task: Task, output_dir: Path) -> Path:
     model_dir = _model_dir_name(result.gather.results)
     run_dir = _build_run_dir(output_dir, model_dir, _slugify(task.prompt))
     payload = {
+        "schema_version": _JSON_OUTPUT_SCHEMA_VERSION,
         "prompt": task.prompt,
         "model": model_dir,
         "requested_strategy": result.requested_strategy,
@@ -462,7 +465,15 @@ def _save_raw(texts: list[str], task: Task, output_dir: Path, model_hint: str = 
     for index, text in enumerate(texts, start=1):
         (run_dir / f"agent_{index}.txt").write_text(text, encoding="utf-8")
     (run_dir / "raw.json").write_text(
-        json.dumps({"prompt": task.prompt, "model": model_hint, "outputs": texts}, indent=2),
+        json.dumps(
+            {
+                "schema_version": _JSON_OUTPUT_SCHEMA_VERSION,
+                "prompt": task.prompt,
+                "model": model_hint,
+                "outputs": texts,
+            },
+            indent=2,
+        ),
         encoding="utf-8",
     )
     return run_dir

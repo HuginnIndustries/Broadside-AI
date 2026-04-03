@@ -1,0 +1,31 @@
+name: Feature request
+description: Propose an improvement to Broadside-AI.
+title: "[Feature]: "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem to solve
+      description: What user problem or workflow gap is this addressing?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What would you like Broadside-AI to do?
+    validations:
+      required: true
+
+  - type: textarea
+    id: cli_contract
+    attributes:
+      label: CLI or API impact
+      description: Describe any flags, JSON output, install, or workflow implications.
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Anything you tried or any workarounds you considered?

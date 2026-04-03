@@ -14,7 +14,9 @@ DIRECTORIES = [
     ROOT / ".pytest_cache",
     ROOT / ".ruff_cache",
     ROOT / ".mypy_cache",
+    ROOT / ".test-tmp",
     ROOT / "broadside_ai_output",
+    ROOT / ".smoke-dist",
     ROOT / "python",
 ]
 

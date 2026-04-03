@@ -40,6 +40,12 @@ After the first public PyPI release:
 pip install broadside-ai
 ```
 
+Recommended for CLI users:
+
+```bash
+pipx install broadside-ai
+```
+
 Optional extras:
 
 ```bash
@@ -149,6 +155,7 @@ broadside-ai run tasks/ticket_classification.yaml --n 5 --synthesis weighted_mer
 
 The JSON payload always includes:
 
+- `schema_version`
 - `status`
 - `prompt`
 - `backend`
@@ -164,6 +171,8 @@ The JSON payload always includes:
 
 `gather` includes `n_requested`, `n_completed`, `n_failed`, `n_parsed`,
 `total_tokens`, and `wall_clock_ms`.
+
+`schema_version` is included so other tools can depend on the payload shape.
 
 ### Save artifacts when you want them
 
@@ -210,6 +219,26 @@ You can also stop early when enough branches have arrived or agreed:
 
 ```bash
 broadside-ai run tasks/ticket_classification.yaml --n 5 --early-stop 3 --agreement 0.66
+```
+
+## Common workflows
+
+### Code review aggregation
+
+```bash
+broadside-ai run tasks/code_review.yaml --n 3 --synthesis consensus --save
+```
+
+### Structured ticket triage for another tool
+
+```bash
+broadside-ai run tasks/ticket_classification.yaml --n 5 --synthesis weighted_merge --json-output > ticket.json
+```
+
+### CI validation for task files
+
+```bash
+python -m broadside_ai validate-task tasks/_template.yaml
 ```
 
 ## Python API

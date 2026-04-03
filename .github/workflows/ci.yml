@@ -46,3 +46,7 @@ jobs:
 
       - name: Check package metadata
         run: python -m twine check dist/*
+
+      - name: Smoke test built package
+        if: matrix.python-version == '3.13'
+        run: python tools/smoke_dist_install.py
