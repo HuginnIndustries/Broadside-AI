@@ -32,7 +32,9 @@ Committed benchmark snapshots in `benchmarks/results/` currently show:
 
 ## Install
 
-Base install includes the Ollama backend:
+### From PyPI
+
+After the first public PyPI release:
 
 ```bash
 pip install broadside-ai
@@ -44,6 +46,39 @@ Optional extras:
 pip install broadside-ai[anthropic]
 pip install broadside-ai[openai]
 pip install broadside-ai[all]
+```
+
+### From a downloaded ZIP or cloned repo
+
+This works now, even before the PyPI package is published.
+
+Windows PowerShell, if you downloaded the GitHub ZIP:
+
+```powershell
+cd .\Broadside-AI-main
+py -3 -m pip install .
+```
+
+Windows PowerShell, if you cloned the repo:
+
+```powershell
+cd .\Broadside-AI
+py -3 -m pip install .
+```
+
+macOS or Linux:
+
+```bash
+cd Broadside-AI-main
+python3 -m pip install .
+```
+
+To install backend extras from the repo checkout, use:
+
+```powershell
+py -3 -m pip install '.[anthropic]'
+py -3 -m pip install '.[openai]'
+py -3 -m pip install '.[all]'
 ```
 
 ## Quick start
