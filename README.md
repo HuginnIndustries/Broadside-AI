@@ -222,6 +222,13 @@ For OpenAI-compatible providers, set `OPENAI_BASE_URL` and pass `--model`.
 
 ## CLI for automation
 
+Choose the synthesis strategy based on the kind of output you want:
+
+- `llm`: one direct final answer for the user or downstream tool
+- `consensus`: an analysis of agreements, disagreements, and unique claims
+- `voting`: aggregation for discrete answers or majority positions
+- `weighted_merge`: algorithmic merge for structured JSON-like outputs
+
 ### Stable JSON output
 
 Use `--json-output` for scripts and subprocess integrations:
@@ -363,7 +370,7 @@ Task -> Scatter -> Gather -> Synthesize
 - `Task`: prompt, optional context, optional output schema
 - `scatter()`: run the task across `n` independent branches
 - `gather()`: normalize outputs, parse structured results, and compute stats
-- `synthesize()`: collapse outputs with `llm`, `consensus`, `voting`, or `weighted_merge`
+- `synthesize()`: collapse outputs with `llm` for a direct answer, `consensus` for analysis, `voting` for discrete choices, or `weighted_merge` for structured data
 - `run()`: convenience wrapper for the full pipeline
 
 ## Development

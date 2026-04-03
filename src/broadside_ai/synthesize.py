@@ -66,7 +66,7 @@ async def _synthesize_llm(
     backend_kwargs: dict[str, Any] | None,
     model: str | None,
 ) -> Synthesis:
-    """Use an LLM to read all outputs and produce a synthesis."""
+    """Use an LLM to turn many candidate outputs into one direct final answer."""
     bk = dict(backend_kwargs or {})
     if model:
         bk["model"] = model
@@ -76,17 +76,19 @@ async def _synthesize_llm(
         f"--- Output {i + 1} ---\n{text}" for i, text in enumerate(gathered.texts)
     )
     prompt = (
-        "You are synthesizing the outputs of multiple independent agents who "
-        "were given the same task. Your job:\n"
-        "1. Identify the consensus - what do most outputs agree on?\n"
-        "2. Flag meaningful outliers - where did outputs diverge significantly?\n"
-        "3. Produce a single, clear synthesis that captures the best signal "
-        "from all outputs.\n"
-        "4. If outputs contradict each other on facts, flag the contradiction "
-        "explicitly rather than silently picking one.\n\n"
+        "You are synthesizing multiple independent answers to the same task.\n\n"
+        "Return one direct final answer that a user could read or use immediately.\n"
+        "Combine the strongest material from the outputs, remove repetition, and "
+        "write like a helpful assistant completing the original task.\n\n"
+        "Do not turn the response into a meta-analysis, analyst report, or sectioned "
+        "comparison unless the original task itself asked for that format.\n"
+        "Do not list consensus, outliers, disagreements, or contradictions unless "
+        "they materially affect the correctness of the final answer.\n"
+        "When the outputs conflict on an important fact, briefly acknowledge the "
+        "uncertainty inside the answer instead of silently choosing one.\n\n"
         f"There are {len(gathered.texts)} outputs to synthesize:\n\n"
         f"{numbered}\n\n"
-        "Provide your synthesis:"
+        "Write the best final answer:"
     )
 
     result = await llm.complete(prompt)

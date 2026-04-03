@@ -38,6 +38,13 @@ meta:
 - include context when the prompt alone is ambiguous
 - use `output_schema` when the response should be structured
 
+## Strategy hints
+
+- `llm`: best when the desired result is one polished final answer
+- `consensus`: best when disagreements or outliers are part of the value
+- `voting`: best when the result is a discrete choice or majority position
+- `weighted_merge`: best when branches return structured JSON-like data
+
 ## Categories
 
 - `creative`: multiple valid outputs, diversity is the point

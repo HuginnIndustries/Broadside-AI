@@ -28,7 +28,7 @@ Primary CLI:
 
 Synthesis strategies:
 
-- `llm`: general-purpose synthesis using an LLM
+- `llm`: one direct final answer using an LLM
 - `consensus`: highlights agreements, disagreements, and unique claims
 - `voting`: aggregates discrete answers or majority positions
 - `weighted_merge`: merges structured outputs algorithmically
