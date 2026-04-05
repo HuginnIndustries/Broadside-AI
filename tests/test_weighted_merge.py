@@ -9,6 +9,7 @@ from broadside_ai.gather import gather
 from broadside_ai.strategies.weighted_merge import (
     _extract_weights,
     _merge_fields,
+    _merge_lists,
     synthesize_weighted_merge,
 )
 
@@ -109,3 +110,20 @@ def test_merge_fields_numeric_and_majority():
     )
     assert merged["score"] == pytest.approx(7.0, abs=0.01)
     assert merged["label"] == "good"
+
+
+def test_merge_fields_booleans_use_majority_vote():
+    merged = _merge_fields(
+        [
+            {"approved": True},
+            {"approved": False},
+            {"approved": True},
+        ],
+        [1 / 3, 1 / 3, 1 / 3],
+    )
+    assert merged["approved"] is True
+
+
+def test_merge_lists_requires_strict_majority():
+    assert _merge_lists([["python"], ["ai"]]) == []
+    assert _merge_lists([["python"], ["python"], ["ai"], ["ai"]]) == []

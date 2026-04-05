@@ -51,10 +51,14 @@ async def scatter(
             return None
         try:
             result = await llm.complete(prompt, **kwargs)
-            budget_tracker.record(result.total_tokens)
+            try:
+                budget_tracker.record(result.total_tokens)
+            except BudgetExceeded:
+                logger.debug(
+                    "Scatter budget exhausted after branch %d; keeping the completed result",
+                    index,
+                )
             return result
-        except BudgetExceeded:
-            return None
         except Exception as exc:
             logger.debug("Scatter branch %d failed: %s", index, exc)
             last_error = exc

@@ -114,6 +114,47 @@ def test_run_context_file_injects_local_file_into_prompt():
         assert "Step two" in result.output
 
 
+def test_run_context_file_preserves_significant_whitespace():
+    runner = CliRunner()
+    with _isolated_fs():
+        Path("context.txt").write_text(
+            "  keep leading space\ntrailing newline\n",
+            encoding="utf-8",
+        )
+
+        result = runner.invoke(
+            main,
+            [
+                "run",
+                "--prompt",
+                "Inspect spacing",
+                "--backend",
+                "echo-prompt",
+                "--raw",
+                "--n",
+                "1",
+                "--context-file",
+                "context.txt",
+            ],
+        )
+
+        assert result.exit_code == 0
+        assert "context_txt:" in result.output
+        assert "  keep leading space\ntrailing newline\n" in result.output
+
+
+def test_run_with_non_mapping_task_file_reports_user_facing_error():
+    runner = CliRunner()
+    with _isolated_fs():
+        Path("bad.yaml").write_text("- nope", encoding="utf-8")
+
+        result = runner.invoke(main, ["run", "bad.yaml", "--backend", "mock"])
+
+        assert result.exit_code == 1
+        assert "Task file 'bad.yaml' must contain a YAML or JSON object" in result.output
+        assert "AttributeError" not in result.output
+
+
 def test_validate_task_command():
     runner = CliRunner()
     with _isolated_fs():
