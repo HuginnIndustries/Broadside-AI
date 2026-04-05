@@ -56,9 +56,12 @@ def validate_task_file(path: str) -> list[str]:
             if not isinstance(recommended_n, int) or recommended_n < 1:
                 errors.append("meta.recommended_n must be a positive integer")
             elif recommended_n > 10:
-                errors.append(
+                import warnings
+
+                warnings.warn(
                     f"meta.recommended_n is {recommended_n}. "
-                    "Performance plateaus at 3-5. Are you sure?"
+                    "Performance typically plateaus at 3-5.",
+                    stacklevel=2,
                 )
 
     return errors
