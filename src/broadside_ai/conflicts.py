@@ -50,7 +50,7 @@ async def detect_conflicts(
     This is a separate step from synthesis - you can run it independently
     to audit outputs before deciding how to synthesize.
     """
-    bk = backend_kwargs or {}
+    bk = dict(backend_kwargs or {})
     if model:
         bk["model"] = model
     llm = get_backend(backend, **bk)

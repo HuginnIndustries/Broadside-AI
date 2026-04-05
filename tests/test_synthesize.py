@@ -85,3 +85,17 @@ async def test_consensus_strategy_keeps_analysis_oriented_prompt():
     assert "extract the CONSENSUS" in RecordingBackend.last_prompt
     assert "DISAGREEMENTS:" in RecordingBackend.last_prompt
     assert "UNIQUE CLAIMS:" in RecordingBackend.last_prompt
+
+
+async def test_consensus_does_not_mutate_backend_kwargs():
+    gathered = make_gather(["answer A", "answer B"])
+    kwargs: dict[str, object] = {"timeout": 30}
+    await synthesize(gathered, strategy="consensus", backend="recording", backend_kwargs=kwargs)
+    assert "model" not in kwargs
+
+
+async def test_voting_does_not_mutate_backend_kwargs():
+    gathered = make_gather(["answer A", "answer B"])
+    kwargs: dict[str, object] = {"timeout": 30}
+    await synthesize(gathered, strategy="voting", backend="recording", backend_kwargs=kwargs)
+    assert "model" not in kwargs

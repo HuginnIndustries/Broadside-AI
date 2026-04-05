@@ -36,7 +36,7 @@ class ScatterBudget:
         """Record tokens consumed by a branch. Raises if budget exceeded."""
         with self._lock:
             self._used += tokens
-            if self.max_tokens is not None and self._used > self.max_tokens:
+            if self.max_tokens is not None and self._used >= self.max_tokens:
                 raise BudgetExceeded(self.max_tokens, self._used)
 
     @property

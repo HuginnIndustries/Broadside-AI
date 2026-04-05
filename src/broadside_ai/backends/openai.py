@@ -54,12 +54,15 @@ class OpenAIBackend(Backend):
             model=kwargs.pop("model", self.model),
             max_tokens=kwargs.pop("max_tokens", self.max_tokens),
             messages=[{"role": "user", "content": prompt}],
+            stream=False,
             **kwargs,
         )
 
         latency = (time.perf_counter() - t0) * 1000
         choice = response.choices[0] if response.choices else None
-        text = choice.message.content or "" if choice else ""
+        text = ""
+        if choice and choice.message:
+            text = choice.message.content or ""
         usage = response.usage
         tokens_in = usage.prompt_tokens if usage else 0
         tokens_out = usage.completion_tokens if usage else 0

@@ -48,11 +48,24 @@ def _try_extract_object(text: str) -> dict[str, Any] | None:
         return None
 
     depth = 0
-    for index in range(start, len(text)):
-        if text[index] == "{":
-            depth += 1
-        elif text[index] == "}":
-            depth -= 1
-            if depth == 0:
-                return _try_loads(text[start : index + 1])
+    in_string = False
+    i = start
+    while i < len(text):
+        ch = text[i]
+        if in_string:
+            if ch == "\\":
+                i += 2
+                continue
+            if ch == '"':
+                in_string = False
+        else:
+            if ch == '"':
+                in_string = True
+            elif ch == "{":
+                depth += 1
+            elif ch == "}":
+                depth -= 1
+                if depth == 0:
+                    return _try_loads(text[start : i + 1])
+        i += 1
     return None
