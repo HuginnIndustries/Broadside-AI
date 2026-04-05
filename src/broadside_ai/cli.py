@@ -129,9 +129,13 @@ def run(
     if not task_file and not prompt:
         raise click.UsageError("Provide a task file or --prompt.")
 
-    task = _load_task_file(task_file) if task_file else Task(prompt=prompt or "")
-    if context_files:
-        task = _merge_task_context(task, _load_context_files(context_files))
+    try:
+        task = _load_task_file(task_file) if task_file else Task(prompt=prompt or "")
+        if context_files:
+            task = _merge_task_context(task, _load_context_files(context_files))
+    except (OSError, TypeError, ValueError, json.JSONDecodeError, yaml.YAMLError) as exc:
+        raise click.ClickException(str(exc)) from exc
+
     backend_kwargs: dict[str, Any] = {}
     if model:
         backend_kwargs["model"] = model
@@ -375,13 +379,18 @@ def _truncate_prompt(prompt: str, max_len: int = 60) -> str:
 
 def _load_task_file(path: str) -> Task:
     file_path = Path(path)
-    text = file_path.read_text()
+    text = file_path.read_text(encoding="utf-8")
     if file_path.suffix in (".yaml", ".yml"):
         data = yaml.safe_load(text)
     elif file_path.suffix == ".json":
         data = json.loads(text)
     else:
         return Task(prompt=text.strip())
+
+    if not isinstance(data, dict):
+        raise ValueError(
+            f"Task file '{path}' must contain a YAML or JSON object with a 'prompt' field."
+        )
 
     task_data = {key: value for key, value in data.items() if key != "meta"}
     return Task(**task_data)
@@ -402,7 +411,7 @@ def _load_context_files(paths: tuple[str, ...]) -> dict[str, str]:
         path = Path(raw_path)
         key = _context_key(path, used_keys)
         used_keys.add(key)
-        context[key] = path.read_text(encoding="utf-8").strip()
+        context[key] = path.read_text(encoding="utf-8")
     return context
 
 

@@ -3,7 +3,7 @@
 import pytest
 
 from broadside_ai.gather import gather
-from broadside_ai.run import run
+from broadside_ai.run import run, run_sync
 from broadside_ai.scatter import scatter
 from broadside_ai.synthesize import synthesize
 from broadside_ai.task import Task
@@ -39,3 +39,10 @@ async def test_full_pipeline_weighted_merge():
     assert synthesis_result.requested_strategy == "weighted_merge"
     assert synthesis_result.parsed_result is not None
     assert synthesis_result.parsed_result["label"] == "spam"
+
+
+@pytest.mark.asyncio
+async def test_run_sync_works_inside_running_event_loop():
+    result = run_sync(Task(prompt="What is 2+2?"), n=1, backend="mock")
+    assert result.strategy == "llm"
+    assert result.result

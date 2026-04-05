@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import threading
 import time
 from typing import Any
 
@@ -76,8 +77,8 @@ def run_sync(
     """Synchronous version of run() for scripts and notebooks."""
     import asyncio
 
-    return asyncio.run(
-        run(
+    async def _run_async() -> Synthesis:
+        return await run(
             task=task,
             n=n,
             backend=backend,
@@ -90,4 +91,28 @@ def run_sync(
             parallel=parallel,
             early_stop=early_stop,
         )
-    )
+
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.run(_run_async())
+
+    result: Synthesis | None = None
+    error: BaseException | None = None
+
+    def _runner() -> None:
+        nonlocal result, error
+        try:
+            result = asyncio.run(_run_async())
+        except BaseException as exc:  # pragma: no cover - exercised via re-raise below
+            error = exc
+
+    thread = threading.Thread(target=_runner, daemon=True)
+    thread.start()
+    thread.join()
+
+    if error is not None:
+        raise error
+
+    assert result is not None
+    return result

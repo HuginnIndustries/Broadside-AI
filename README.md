@@ -67,11 +67,12 @@ broadside-ai --help
 Use the module entrypoint instead:
 
 ```cmd
-py -3 -m broadside_ai --help
+py -3.11 -m broadside_ai --help
 ```
 
-This works even when the user Scripts directory is not on `PATH`. You can use
-`py -3 -m broadside_ai` anywhere this README shows `broadside-ai`.
+Use the same Python launcher version you installed Broadside-AI into. On
+machines with multiple Python installs, `py -3` may point at a different
+interpreter and fail to find the package.
 
 If you prefer the console-script form, install with `pipx` so the command is
 added to a CLI-friendly location.
@@ -135,6 +136,11 @@ broadside-ai run --prompt "Write a pitch for a dotfile manager" --n 3 --model ge
 ```
 
 That should print one synthesized result to stdout.
+
+Examples below that reference repository files such as `RELEASE.md`,
+`tasks/...`, or `benchmarks/...` assume you are in a checkout of this repo.
+A plain `pip install broadside-ai` does not place those files in your current
+working directory, so use your own local files or create a task YAML first.
 
 ### Plain CLI output
 
@@ -263,7 +269,7 @@ broadside_ai_output/{model}/{topic}_{timestamp}/
 ### Validate task files
 
 ```bash
-broadside-ai validate-task tasks/ticket_classification.yaml
+broadside-ai validate-task my_task.yaml
 ```
 
 Validation exits `0` when every file is valid and `1` when any file fails.

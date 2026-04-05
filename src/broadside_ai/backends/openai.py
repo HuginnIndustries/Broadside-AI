@@ -44,8 +44,9 @@ class OpenAIBackend(Backend):
         self.model = model
         self.max_tokens = max_tokens
         client_kwargs: dict[str, Any] = {"api_key": resolved_key}
-        if base_url:
-            client_kwargs["base_url"] = base_url
+        resolved_base_url = base_url or os.environ.get("OPENAI_BASE_URL")
+        if resolved_base_url:
+            client_kwargs["base_url"] = resolved_base_url
         self._client = openai.AsyncOpenAI(**client_kwargs)
 
     async def complete(self, prompt: str, **kwargs: Any) -> AgentResult:

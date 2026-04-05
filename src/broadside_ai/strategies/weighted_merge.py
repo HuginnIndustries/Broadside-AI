@@ -70,7 +70,11 @@ def _merge_fields(outputs: list[dict[str, Any]], weights: list[float]) -> dict[s
         raw_values = [value for value, _ in values]
         value_weights = [weight for _, weight in values]
 
-        if all(isinstance(value, (int, float)) for value in raw_values):
+        if all(isinstance(value, bool) for value in raw_values):
+            merged[key] = _merge_bool(raw_values)
+        elif all(
+            isinstance(value, (int, float)) and not isinstance(value, bool) for value in raw_values
+        ):
             merged[key] = _merge_numeric(raw_values, value_weights)
         elif all(isinstance(value, str) for value in raw_values):
             merged[key] = _merge_categorical([str(value) for value in raw_values])
@@ -98,6 +102,10 @@ def _merge_categorical(values: list[str]) -> str:
     return Counter(values).most_common(1)[0][0]
 
 
+def _merge_bool(values: list[bool]) -> bool:
+    return values.count(True) > (len(values) / 2)
+
+
 def _merge_lists(values: list[list[Any]]) -> list[Any]:
     from collections import Counter
 
@@ -105,7 +113,7 @@ def _merge_lists(values: list[list[Any]]) -> list[Any]:
     for value_list in values:
         all_items.extend(value_list)
 
-    threshold = len(values) / 2
+    threshold = (len(values) // 2) + 1
     counts = Counter(str(item) for item in all_items)
     seen: set[str] = set()
     result: list[Any] = []
