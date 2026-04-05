@@ -45,8 +45,6 @@ On macOS or Linux, replace `py -3` with `python3` in the commands below.
 
 ### From PyPI
 
-After the first public PyPI release:
-
 ```bash
 py -3 -m pip install broadside-ai
 ```
