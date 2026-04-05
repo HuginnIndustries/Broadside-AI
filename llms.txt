@@ -24,7 +24,15 @@ Primary CLI:
 
 - `broadside-ai run`
 - `broadside-ai validate-task`
+- `broadside-ai --version`
 - `python -m broadside_ai`
+
+Key flags:
+
+- `--context-file` appends local files as grounding context for the task
+- `--json-output` emits a stable machine-readable JSON payload
+- `--early-stop` / `--agreement` for cost and latency control
+- `--save` / `--output` to persist run artifacts
 
 Synthesis strategies:
 

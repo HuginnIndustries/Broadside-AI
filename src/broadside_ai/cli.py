@@ -427,9 +427,13 @@ def _resolve_model_display(backend: str, backend_kwargs: dict[str, Any]) -> str:
 
         return f"{_DEFAULT_MODEL} (default)"
     if backend == "anthropic":
-        return "claude-sonnet-4-20250514 (default)"
+        from broadside_ai.backends.anthropic import _DEFAULT_MODEL as _ANTHROPIC_DEFAULT
+
+        return f"{_ANTHROPIC_DEFAULT} (default)"
     if backend == "openai":
-        return "gpt-4o-mini (default)"
+        from broadside_ai.backends.openai import _DEFAULT_MODEL as _OPENAI_DEFAULT
+
+        return f"{_OPENAI_DEFAULT} (default)"
     return "(backend default)"
 
 
