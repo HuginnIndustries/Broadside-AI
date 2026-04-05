@@ -73,8 +73,7 @@ def _merge_fields(outputs: list[dict[str, Any]], weights: list[float]) -> dict[s
         if all(isinstance(value, bool) for value in raw_values):
             merged[key] = _merge_bool(raw_values)
         elif all(
-            isinstance(value, (int, float)) and not isinstance(value, bool)
-            for value in raw_values
+            isinstance(value, (int, float)) and not isinstance(value, bool) for value in raw_values
         ):
             merged[key] = _merge_numeric(raw_values, value_weights)
         elif all(isinstance(value, str) for value in raw_values):
