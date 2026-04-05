@@ -45,8 +45,6 @@ On macOS or Linux, replace `py -3` with `python3` in the commands below.
 
 ### From PyPI
 
-After the first public PyPI release:
-
 ```bash
 py -3 -m pip install broadside-ai
 ```
@@ -67,7 +65,7 @@ py -3 -m pip install "broadside-ai[all]"
 
 ### From a downloaded ZIP or cloned repo
 
-This works now, even before the PyPI package is published.
+If you prefer to install from source:
 
 Windows PowerShell, if you downloaded the GitHub ZIP:
 

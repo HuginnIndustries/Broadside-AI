@@ -10,10 +10,27 @@ Use this checklist when publishing Broadside-AI.
 4. Add `pypi` and `testpypi` environments in GitHub with the protections you want.
 5. Confirm the publish workflows can request `id-token: write`.
 
-For PyPI Trusted Publishing, the workflow file paths in this repo are:
+### Trusted publisher values
 
-- `.github/workflows/publish.yml` for PyPI
-- `.github/workflows/publish-testpypi.yml` for TestPyPI
+**PyPI** (create as pending publisher at <https://pypi.org/manage/account/publishing/>):
+
+| Field             | Value                                  |
+| ----------------- | -------------------------------------- |
+| Project name      | `broadside-ai`                         |
+| Owner             | `HuginnIndustries`                     |
+| Repository name   | `Broadside-AI`                         |
+| Workflow name     | `publish.yml`                          |
+| Environment name  | `pypi`                                 |
+
+**TestPyPI** (create at <https://test.pypi.org/manage/account/publishing/>):
+
+| Field             | Value                                  |
+| ----------------- | -------------------------------------- |
+| Project name      | `broadside-ai`                         |
+| Owner             | `HuginnIndustries`                     |
+| Repository name   | `Broadside-AI`                         |
+| Workflow name     | `publish-testpypi.yml`                 |
+| Environment name  | `testpypi`                             |
 
 ## Local release gate
 
