@@ -1,5 +1,10 @@
 # Broadside-AI
 
+[![CI](https://github.com/HuginnIndustries/Broadside-AI/actions/workflows/ci.yml/badge.svg)](https://github.com/HuginnIndustries/Broadside-AI/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/broadside-ai)](https://pypi.org/project/broadside-ai/)
+[![Python](https://img.shields.io/pypi/pyversions/broadside-ai)](https://pypi.org/project/broadside-ai/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 Broadside-AI is a CLI-first Python tool for parallel LLM aggregation. It fans a
 task out to multiple independent runs, gathers the outputs, and produces one
 final result that works well in scripts, CI, and other automation.
@@ -32,84 +37,66 @@ Committed benchmark snapshots in `benchmarks/results/` currently show:
 
 ## Install
 
-Broadside-AI gives you two equivalent ways to run it:
-
-- `broadside-ai ...`
-- `py -3 -m broadside_ai ...`
-
-If you are on Windows and the `broadside-ai` command is not recognized, use the
-`py -3 -m broadside_ai ...` form. It works even when the user Scripts
-directory is not on `PATH`.
-
-On macOS or Linux, replace `py -3` with `python3` in the commands below.
-
-### From PyPI
-
 ```bash
-py -3 -m pip install broadside-ai
+pip install broadside-ai
 ```
 
-Recommended for CLI users:
+Or, to install it as an isolated CLI tool:
 
 ```bash
 pipx install broadside-ai
 ```
 
-Optional extras:
+Optional extras for cloud backends:
 
 ```bash
-py -3 -m pip install "broadside-ai[anthropic]"
-py -3 -m pip install "broadside-ai[openai]"
-py -3 -m pip install "broadside-ai[all]"
+pip install "broadside-ai[anthropic]"
+pip install "broadside-ai[openai]"
+pip install "broadside-ai[all]"
 ```
 
-### From a downloaded ZIP or cloned repo
-
-If you prefer to install from source:
-
-Windows PowerShell, if you downloaded the GitHub ZIP:
-
-```powershell
-cd .\Broadside-AI-main
-py -3 -m pip install .
-```
-
-Windows PowerShell, if you cloned the repo:
-
-```powershell
-cd .\Broadside-AI
-py -3 -m pip install .
-```
-
-macOS or Linux:
+After installing, verify the CLI works:
 
 ```bash
-cd Broadside-AI-main
-python3 -m pip install .
+broadside-ai --help
 ```
 
-To install backend extras from the repo checkout, use:
+<details>
+<summary>Windows: if <code>broadside-ai</code> is not on PATH</summary>
 
-```powershell
-py -3 -m pip install ".[anthropic]"
-py -3 -m pip install ".[openai]"
-py -3 -m pip install ".[all]"
-```
-
-### First success on Windows
-
-If you want the most reliable first-run path on Windows, use this sequence:
-
-1. Install the package from the repo or from PyPI.
-2. Verify the module entrypoint works:
+Use the module entrypoint instead:
 
 ```cmd
 py -3 -m broadside_ai --help
 ```
 
-3. If `broadside-ai --help` also works, you can use either form.
-4. If `broadside-ai` is not recognized, keep using `py -3 -m broadside_ai ...`
-   or install with `pipx` so the command is added to a CLI-friendly location.
+This works even when the user Scripts directory is not on `PATH`. You can use
+`py -3 -m broadside_ai` anywhere this README shows `broadside-ai`.
+
+If you prefer the console-script form, install with `pipx` so the command is
+added to a CLI-friendly location.
+
+</details>
+
+<details>
+<summary>Install from source</summary>
+
+Clone the repo or download the GitHub ZIP, then install:
+
+```bash
+cd Broadside-AI
+pip install .
+```
+
+To install backend extras from a source checkout:
+
+```bash
+pip install ".[anthropic]"
+pip install ".[openai]"
+pip install ".[all]"
+```
+
+</details>
 
 ## Quick start
 
@@ -124,21 +111,9 @@ way to avoid a frustrating first try is:
 
 #### Step 1: Confirm the install worked
 
-Start here:
-
-```cmd
-py -3 -m broadside_ai --help
-```
-
-If you want to try the console-script form too:
-
-```cmd
+```bash
 broadside-ai --help
 ```
-
-If that second command says `'broadside-ai' is not recognized`, nothing is
-wrong with Broadside-AI itself. It just means the script location is not on
-your `PATH` yet. Use `py -3 -m broadside_ai ...` and keep going.
 
 #### Step 2: Pick one backend
 
@@ -149,14 +124,14 @@ first run, Ollama local is the least setup-heavy option.
 
 Install Ollama, then pull a local model:
 
-```cmd
+```bash
 ollama pull gemma3:1b
 ```
 
 Now run Broadside-AI:
 
-```cmd
-py -3 -m broadside_ai run --prompt "Write a pitch for a dotfile manager" --n 3 --model gemma3:1b
+```bash
+broadside-ai run --prompt "Write a pitch for a dotfile manager" --n 3 --model gemma3:1b
 ```
 
 That should print one synthesized result to stdout.
@@ -167,8 +142,7 @@ That should print one synthesized result to stdout.
 easy to compose with other tools:
 
 ```bash
-python -m broadside_ai run --prompt "Summarize this changelog" --n 3 > summary.txt
-py -3 -m broadside_ai run --prompt "Write a pitch for a dotfile manager" --n 3 --model gemma3:1b
+broadside-ai run --prompt "Summarize this changelog" --n 3 > summary.txt
 broadside-ai run --prompt "Write a pitch for a dotfile manager" --n 3 --model gemma3:1b
 ```
 
@@ -198,7 +172,7 @@ Install Ollama, sign in, and pull the default cloud model:
 ```bash
 ollama signin
 ollama pull nemotron-3-super:cloud
-py -3 -m broadside_ai run --prompt "Write a pitch for a dotfile manager" --n 3
+broadside-ai run --prompt "Write a pitch for a dotfile manager" --n 3
 ```
 
 Execution defaults are tuned for user success:
@@ -212,7 +186,7 @@ Override with `--parallel` or `--sequential` when needed.
 
 ```bash
 ollama pull gemma3:1b
-py -3 -m broadside_ai run --prompt "Write a pitch for a dotfile manager" --n 3 --model gemma3:1b
+broadside-ai run --prompt "Write a pitch for a dotfile manager" --n 3 --model gemma3:1b
 ```
 
 ### Anthropic
@@ -220,8 +194,8 @@ py -3 -m broadside_ai run --prompt "Write a pitch for a dotfile manager" --n 3 -
 Set `ANTHROPIC_API_KEY` in your shell first, then run:
 
 ```bash
-py -3 -m pip install "broadside-ai[anthropic]"
-py -3 -m broadside_ai run --prompt "Review this design" --n 3 --backend anthropic
+pip install "broadside-ai[anthropic]"
+broadside-ai run --prompt "Review this design" --n 3 --backend anthropic
 ```
 
 ### OpenAI-compatible APIs
@@ -229,8 +203,8 @@ py -3 -m broadside_ai run --prompt "Review this design" --n 3 --backend anthropi
 Set `OPENAI_API_KEY` in your shell first, then run:
 
 ```bash
-py -3 -m pip install "broadside-ai[openai]"
-py -3 -m broadside_ai run --prompt "Compare these options" --n 3 --backend openai
+pip install "broadside-ai[openai]"
+broadside-ai run --prompt "Compare these options" --n 3 --backend openai
 ```
 
 For OpenAI-compatible providers, set `OPENAI_BASE_URL` and pass `--model`.
@@ -249,7 +223,7 @@ Choose the synthesis strategy based on the kind of output you want:
 Use `--json-output` for scripts and subprocess integrations:
 
 ```bash
-py -3 -m broadside_ai run tasks/ticket_classification.yaml --n 5 --synthesis weighted_merge --json-output
+broadside-ai run tasks/ticket_classification.yaml --n 5 --synthesis weighted_merge --json-output
 ```
 
 The JSON payload always includes:
@@ -276,8 +250,8 @@ The JSON payload always includes:
 ### Save artifacts when you want them
 
 ```bash
-py -3 -m broadside_ai run tasks/code_review.yaml --n 3 --save
-py -3 -m broadside_ai run tasks/code_review.yaml --n 3 --output artifacts/review-run
+broadside-ai run tasks/code_review.yaml --n 3 --save
+broadside-ai run tasks/code_review.yaml --n 3 --output artifacts/review-run
 ```
 
 Saved runs go under:
@@ -289,7 +263,6 @@ broadside_ai_output/{model}/{topic}_{timestamp}/
 ### Validate task files
 
 ```bash
-py -3 -m broadside_ai validate-task tasks/ticket_classification.yaml
 broadside-ai validate-task tasks/ticket_classification.yaml
 ```
 
@@ -311,7 +284,7 @@ That enables `weighted_merge`, an algorithmic synthesis strategy that:
 Example:
 
 ```bash
-py -3 -m broadside_ai run tasks/ticket_classification.yaml --n 5 --synthesis weighted_merge --json-output
+broadside-ai run tasks/ticket_classification.yaml --n 5 --synthesis weighted_merge --json-output
 ```
 
 You can also stop early when enough branches have arrived or agreed:
@@ -337,7 +310,7 @@ broadside-ai run tasks/ticket_classification.yaml --n 5 --synthesis weighted_mer
 ### CI validation for task files
 
 ```bash
-python -m broadside_ai validate-task tasks/_template.yaml
+broadside-ai validate-task tasks/_template.yaml
 ```
 
 ## Python API
@@ -409,7 +382,8 @@ Repository docs:
 
 ## Status
 
-Broadside-AI is pre-1.0 software, but the repo is intended to be usable and
-releasable as-is: package metadata, CLI behavior, task validation, and release
-checks are kept in sync in-repo. The markdown docs in this repository are the
-source of truth.
+Broadside-AI is at **v0.1.0** (first public release). The CLI interface,
+JSON output schema, and Python API (`run`, `run_sync`, `Task`, `EarlyStop`)
+are considered stable for this release. Synthesis strategies and backend
+options may expand in future versions. Breaking changes before v1.0 will
+be noted in [release notes](https://github.com/HuginnIndustries/Broadside-AI/releases).

@@ -47,7 +47,7 @@ The project now has:
 
 ### 5. Community readiness
 
-- add issue templates and a PR template
+- ~~add issue templates and a PR template~~ (done)
 - label good first issues
 - document benchmark contribution expectations
 
@@ -73,4 +73,4 @@ These remain out of scope unless the product identity changes:
 The repository markdown files are part of the product surface. If behavior
 changes, update the docs in the same PR.
 
-Last updated: 2026-04-03
+Last updated: 2026-04-05

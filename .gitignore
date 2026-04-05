@@ -19,3 +19,4 @@ coverage.xml
 venv/
 broadside_ai_output/
 pytest-cache-files-*/
+*.pdf

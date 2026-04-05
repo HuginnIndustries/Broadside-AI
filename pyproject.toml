@@ -73,6 +73,8 @@ exclude = [
     "/pytest-cache-files-*",
     "/benchmarks/results",
     "/Research Results*.pdf",
+    "/AUDIT_REPORT*.md",
+    "/CHANGELOG.md",
     "/python",
     "**/__pycache__",
     "**/*.py[cod]",
