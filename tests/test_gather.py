@@ -1,6 +1,7 @@
-"""Tests for gather result normalization."""
+"""Tests for gather result normalization and JSON parsing."""
 
 from broadside_ai.gather import gather
+from broadside_ai.parsing import try_parse_json
 from tests.conftest import make_result
 
 
@@ -35,3 +36,18 @@ def test_gather_summary():
     assert summary["n_requested"] == 1
     assert summary["completed"] == 1
     assert summary["n_parsed"] == 0
+
+
+def test_parse_json_with_braces_in_string_values():
+    text = '{"msg": "use {} for templates", "count": 1}'
+    result = try_parse_json(text)
+    assert result is not None
+    assert result["msg"] == "use {} for templates"
+    assert result["count"] == 1
+
+
+def test_parse_json_embedded_with_braces_in_strings():
+    text = 'Here is the result: {"msg": "pattern {x} works", "ok": true} done.'
+    result = try_parse_json(text)
+    assert result is not None
+    assert result["ok"] is True

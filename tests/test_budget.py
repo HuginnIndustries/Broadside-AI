@@ -38,3 +38,11 @@ def test_budget_exhausted_flag():
     # Manually push past limit to test exhausted check
     b._used = 1000
     assert b.exhausted
+
+
+def test_budget_exact_boundary_raises():
+    """record() and exhausted must agree at the exact boundary."""
+    b = ScatterBudget(max_tokens=1000)
+    with pytest.raises(BudgetExceeded):
+        b.record(1000)
+    assert b.exhausted

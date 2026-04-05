@@ -35,7 +35,7 @@ async def synthesize_voting(
     2. extract_labels=False: Treat each full output as a "vote" and
        use the LLM to identify the majority position.
     """
-    bk = backend_kwargs or {}
+    bk = dict(backend_kwargs or {})
     if model:
         bk["model"] = model
     llm = get_backend(backend, **bk)

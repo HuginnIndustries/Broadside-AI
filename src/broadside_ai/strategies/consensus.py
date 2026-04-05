@@ -32,7 +32,7 @@ async def synthesize_consensus(
     2. Where agents disagreed and what each side said
     3. Any facts that only one agent mentioned
     """
-    bk = backend_kwargs or {}
+    bk = dict(backend_kwargs or {})
     if model:
         bk["model"] = model
     llm = get_backend(backend, **bk)

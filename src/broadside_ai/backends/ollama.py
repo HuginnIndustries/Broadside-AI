@@ -42,7 +42,13 @@ class OllamaBackend(Backend):
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 response = await client.post(f"{self.base_url}/api/generate", json=payload)
                 response.raise_for_status()
-                data = response.json()
+                try:
+                    data = response.json()
+                except ValueError:
+                    raise RuntimeError(
+                        f"Invalid response from Ollama at {self.base_url}. "
+                        "The server may be overloaded or returning an error page."
+                    ) from None
         except httpx.ConnectError:
             raise ConnectionError(
                 f"Can't connect to Ollama at {self.base_url}.\n\n"
