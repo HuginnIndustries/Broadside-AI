@@ -65,7 +65,7 @@ py -3 -m pip install "broadside-ai[all]"
 
 ### From a downloaded ZIP or cloned repo
 
-This works now, even before the PyPI package is published.
+If you prefer to install from source:
 
 Windows PowerShell, if you downloaded the GitHub ZIP:
 
