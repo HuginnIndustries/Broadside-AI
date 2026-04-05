@@ -98,6 +98,13 @@ def main() -> None:
 @click.option("--output", "-o", type=click.Path(), help="Directory to save run artifacts.")
 @click.option("--save", is_flag=True, help="Save run artifacts to the default output directory.")
 @click.option("--raw", is_flag=True, help="Emit raw scatter outputs instead of a synthesis.")
+@click.option(
+    "--context-file",
+    "context_files",
+    multiple=True,
+    type=click.Path(exists=True, dir_okay=False),
+    help="Append one or more local files as grounding context for the task.",
+)
 @click.option("--json-output", "json_out", is_flag=True, help="Emit a stable JSON payload.")
 @click.option("--early-stop", type=int, help="Stop after this many results arrive.")
 @click.option("--agreement", type=float, help="Stop when this fraction of results agree.")
@@ -113,6 +120,7 @@ def run(
     output: str | None,
     save: bool,
     raw: bool,
+    context_files: tuple[str, ...],
     json_out: bool,
     early_stop: int | None,
     agreement: float | None,
@@ -122,6 +130,8 @@ def run(
         raise click.UsageError("Provide a task file or --prompt.")
 
     task = _load_task_file(task_file) if task_file else Task(prompt=prompt or "")
+    if context_files:
+        task = _merge_task_context(task, _load_context_files(context_files))
     backend_kwargs: dict[str, Any] = {}
     if model:
         backend_kwargs["model"] = model
@@ -375,6 +385,37 @@ def _load_task_file(path: str) -> Task:
 
     task_data = {key: value for key, value in data.items() if key != "meta"}
     return Task(**task_data)
+
+
+def _merge_task_context(task: Task, extra_context: dict[str, Any]) -> Task:
+    if not extra_context:
+        return task
+    merged_context = dict(task.context)
+    merged_context.update(extra_context)
+    return Task(prompt=task.prompt, context=merged_context, output_schema=task.output_schema)
+
+
+def _load_context_files(paths: tuple[str, ...]) -> dict[str, str]:
+    context: dict[str, str] = {}
+    used_keys: set[str] = set()
+    for raw_path in paths:
+        path = Path(raw_path)
+        key = _context_key(path, used_keys)
+        used_keys.add(key)
+        context[key] = path.read_text(encoding="utf-8").strip()
+    return context
+
+
+def _context_key(path: Path, used_keys: set[str]) -> str:
+    import re
+
+    base = re.sub(r"[^a-zA-Z0-9]+", "_", path.name).strip("_").lower() or "context"
+    key = base
+    suffix = 2
+    while key in used_keys:
+        key = f"{base}_{suffix}"
+        suffix += 1
+    return key
 
 
 def _resolve_model_display(backend: str, backend_kwargs: dict[str, Any]) -> str:

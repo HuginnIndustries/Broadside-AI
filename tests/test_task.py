@@ -28,6 +28,16 @@ def test_render_prompt_with_context():
     assert "criteria: durability, cost" in rendered
 
 
+def test_render_prompt_with_multiline_context():
+    task = Task(
+        prompt="Plan the release",
+        context={"release_md": "Step one\nStep two"},
+    )
+    rendered = task.render_prompt()
+    assert "release_md:" in rendered
+    assert "Step one\nStep two" in rendered
+
+
 def test_render_prompt_with_schema():
     task = Task(
         prompt="Classify this",

@@ -31,7 +31,12 @@ class Task(BaseModel):
         if self.context:
             parts.append("\n--- Context ---")
             for key, value in self.context.items():
-                parts.append(f"{key}: {value}")
+                text = str(value)
+                if "\n" in text:
+                    parts.append(f"{key}:")
+                    parts.append(text)
+                else:
+                    parts.append(f"{key}: {text}")
         if self.output_schema:
             parts.append("\n--- Expected Output Format ---")
             parts.append(

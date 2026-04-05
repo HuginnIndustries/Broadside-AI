@@ -47,7 +47,13 @@ async def test_llm_synthesis_prompt_requests_direct_final_answer():
     assert result.strategy == "llm"
     assert result.result == "final answer"
     assert "Return one direct final answer" in RecordingBackend.last_prompt
+    assert "Lead with the answer or plan itself" in RecordingBackend.last_prompt
+    assert (
+        "If the task is procedural, return the minimum useful checklist"
+        in RecordingBackend.last_prompt
+    )
     assert "Do not turn the response into a meta-analysis" in RecordingBackend.last_prompt
+    assert "briefly say what context is missing" in RecordingBackend.last_prompt
     assert "Write the best final answer:" in RecordingBackend.last_prompt
 
 

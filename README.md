@@ -174,6 +174,23 @@ broadside-ai run --prompt "Write a pitch for a dotfile manager" --n 3 --model ge
 
 Files are written only when you ask for them with `--save` or `--output`.
 
+### Ground inline prompts with local files
+
+For project-specific tasks, pass the source material in with `--context-file`
+instead of relying on a bare prompt. Broadside will append those files to the
+task sent to every branch.
+
+```bash
+broadside-ai run \
+  --prompt "Plan Broadside-AI's next PyPI release as a concise checklist" \
+  --context-file RELEASE.md \
+  --context-file pyproject.toml \
+  --context-file .github/workflows/publish.yml
+```
+
+That works much better for repo operations than an ungrounded prompt like
+`"Plan out a PyPI project release"`, which usually produces a generic tutorial.
+
 ### Ollama cloud
 
 Install Ollama, sign in, and pull the default cloud model:
