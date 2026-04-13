@@ -26,7 +26,12 @@ async def scatter(
     parallel: bool | None = None,
     early_stop: EarlyStop | None = None,
 ) -> list[AgentResult]:
-    """Run a task across N agents and collect completed results."""
+    """Run a task across N agents and collect completed results.
+
+    If a ``budget`` is provided, it is mutated in-place: each branch's token
+    usage is recorded against it. Create a fresh ``ScatterBudget`` for each
+    call if you need independent budget tracking across runs.
+    """
     if n < 1:
         raise ValueError(f"n must be >= 1, got {n}")
     if n > 20:

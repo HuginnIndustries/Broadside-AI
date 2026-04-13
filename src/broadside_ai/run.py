@@ -74,7 +74,23 @@ def run_sync(
     parallel: bool | None = None,
     early_stop: EarlyStop | None = None,
 ) -> Synthesis:
-    """Synchronous version of run() for scripts and notebooks."""
+    """Synchronous wrapper around :func:`run` for scripts and notebooks.
+
+    When called from outside any running event loop, this uses
+    ``asyncio.run()`` directly.  When called from inside an already-running
+    loop (e.g. Jupyter, IPython), it spawns a background thread to avoid
+    the "cannot nest event loops" error.
+
+    Known limitations of the thread path:
+
+    * Traceback context is preserved by chaining the original exception as
+      ``__cause__``, but the raw traceback chain will show the thread
+      boundary. ``raise from`` ensures the original cause is still
+      inspectable.
+    * Signal handling (e.g. Ctrl+C / ``KeyboardInterrupt``) may not
+      propagate cleanly from the background thread. For long-running calls
+      in interactive environments, prefer the async :func:`run` directly.
+    """
     import asyncio
 
     async def _run_async() -> Synthesis:
@@ -105,7 +121,7 @@ def run_sync(
         try:
             result = asyncio.run(_run_async())
         except BaseException as exc:  # pragma: no cover - exercised via re-raise below
-            error = exc
+            error = exc.with_traceback(exc.__traceback__)
 
     thread = threading.Thread(target=_runner, daemon=True)
     thread.start()

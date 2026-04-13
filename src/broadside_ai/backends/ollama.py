@@ -10,7 +10,7 @@ import httpx
 from broadside_ai.backends import register
 from broadside_ai.backends.base import AgentResult, Backend
 
-_DEFAULT_MODEL = "nemotron-3-super:cloud"
+_DEFAULT_MODEL = "nemotron-3-super:cloud"  # cloud model; use --model for local
 _DEFAULT_BASE_URL = "http://localhost:11434"
 
 

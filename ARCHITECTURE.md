@@ -50,6 +50,8 @@ The CLI is designed for use inside other tools:
 - `--json-output` emits a stable machine-readable payload
 - rich terminal output is shown only when stdout is a TTY
 - `validate-task` gives a simple success/failure contract for CI
+- `--context-file` only supports UTF-8 text files; binary files produce
+  a clear error message
 
 That contract matters as much as the Python API. Broadside-AI is intended to be
 easy to call from shell scripts, build systems, and subprocess wrappers.
@@ -78,6 +80,18 @@ That interface stays intentionally small because Broadside-AI is built around
 single-shot prompts. There is no conversation manager, tool loop, or agent
 lifecycle in the hot path.
 
+## Synchronous wrapper
+
+`run_sync()` is a convenience wrapper for scripts, notebooks, and other
+contexts where calling the async `run()` directly is inconvenient.
+
+When called from outside any running event loop, it uses `asyncio.run()`
+directly.  When called from inside an already-running loop (e.g. Jupyter or
+IPython), it spawns a background thread to avoid the "cannot nest event loops"
+error. Exception tracebacks are preserved via ``raise ... from ...`` chaining,
+but the thread boundary will appear in the raw traceback. For interactive
+environments, prefer the async `run()` directly for cleaner error handling.
+
 ## Execution defaults
 
 Broadside-AI defaults to:
@@ -93,8 +107,23 @@ from parallel fan-out. Local models on modest hardware often do not.
 Scatter/gather multiplies cost by design, so budget tracking is part of the
 core contract, not an optional add-on.
 
-`ScatterBudget` provides an upper bound on token usage. `EarlyStop` lets callers
-end a run once enough useful signal has arrived.
+`ScatterBudget` provides an upper bound on token usage. The budget object is
+mutated in-place during scatter: each branch's token usage is recorded against
+it. Create a fresh `ScatterBudget` for each call if you need independent
+tracking across runs.
+
+`EarlyStop` lets callers end a run once enough useful signal has arrived.
+
+## Conflict detection
+
+The `conflicts` module can detect factual contradictions between scatter outputs
+as a separate audit step before synthesis. It is **experimental**: the LLM
+response is parsed into structured `Conflict` objects using a best-effort regex
+extractor, and the detection quality depends heavily on the model's ability to
+follow the structured output format.
+
+For production use, prefer the `consensus` synthesis strategy, which handles
+disagreements as part of its normal flow.
 
 ## Supported extension points
 

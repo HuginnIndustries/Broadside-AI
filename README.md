@@ -160,6 +160,9 @@ For project-specific tasks, pass the source material in with `--context-file`
 instead of relying on a bare prompt. Broadside will append those files to the
 task sent to every branch.
 
+Only UTF-8 text files are supported. Binary files (images, PDFs, etc.) will
+produce a clear error message.
+
 ```bash
 broadside-ai run \
   --prompt "Plan Broadside-AI's next PyPI release as a concise checklist" \
@@ -185,6 +188,11 @@ Execution defaults are tuned for user success:
 
 - cloud backends and Ollama cloud models run in parallel by default
 - local Ollama models run sequentially by default
+
+The default Ollama model is `nemotron-3-super:cloud` (a cloud model). If you
+run `broadside-ai run` without `--model` and don't have Ollama cloud
+configured, you will get a connection error. Either sign in with `ollama
+signin` or pass a local model with `--model`.
 
 Override with `--parallel` or `--sequential` when needed.
 
@@ -344,6 +352,13 @@ result = run_sync(
 print(result.result)
 print(result.parsed_result)
 ```
+
+`run_sync` works outside any event loop (plain scripts) and inside one
+(Jupyter, IPython) by spawning a background thread. For cleaner error handling
+in interactive environments, use the async `run` directly. `Task.context`
+values are rendered with `str()`; prefer plain strings, numbers, or small
+text blocks — large dicts or lists will render as their Python `repr`, which
+is rarely useful in a prompt.
 
 Async usage:
 

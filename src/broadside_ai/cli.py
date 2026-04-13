@@ -411,7 +411,14 @@ def _load_context_files(paths: tuple[str, ...]) -> dict[str, str]:
         path = Path(raw_path)
         key = _context_key(path, used_keys)
         used_keys.add(key)
-        context[key] = path.read_text(encoding="utf-8")
+        try:
+            context[key] = path.read_text(encoding="utf-8")
+        except UnicodeDecodeError as exc:
+            raise click.ClickException(
+                f"--context-file '{raw_path}' is not a UTF-8 text file. "
+                "Only text files are supported; binary files (images, PDFs, etc.) "
+                "cannot be used as context."
+            ) from exc
     return context
 
 

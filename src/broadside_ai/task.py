@@ -14,7 +14,12 @@ class Task(BaseModel):
     prompt: str = Field(description="The instruction each scattered agent receives.")
     context: dict[str, Any] = Field(
         default_factory=dict,
-        description="Key-value pairs injected into the prompt. Grounding data.",
+        description=(
+            "Key-value pairs injected into the prompt. Grounding data. "
+            "Values are rendered with str(); prefer plain strings, numbers, "
+            "or small text blocks. Large dicts or lists will render as their "
+            "Python repr, which is usually not useful in a prompt."
+        ),
     )
     output_schema: dict[str, Any] | None = Field(
         default=None,

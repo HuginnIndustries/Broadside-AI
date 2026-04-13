@@ -46,11 +46,10 @@ async def synthesize_voting(
 
 
 async def _vote_with_extraction(llm: Any, gathered: GatherResult) -> Synthesis:
-    """Extract a label from each output, then count votes."""
-    labels = []
-    extraction_tokens = 0
+    """Extract a label from each output in parallel, then count votes."""
+    import asyncio
 
-    for text in gathered.texts:
+    async def _extract_label(text: str) -> tuple[str, int]:
         prompt = (
             "Extract the single core answer, label, or conclusion from this text. "
             "Return ONLY the answer - no explanation, no reasoning, just the answer.\n\n"
@@ -58,8 +57,11 @@ async def _vote_with_extraction(llm: Any, gathered: GatherResult) -> Synthesis:
             "Core answer:"
         )
         result = await llm.complete(prompt)
-        labels.append(result.text.strip().lower())
-        extraction_tokens += result.total_tokens
+        return result.text.strip().lower(), result.total_tokens
+
+    extraction_results = await asyncio.gather(*[_extract_label(text) for text in gathered.texts])
+    labels = [label for label, _ in extraction_results]
+    extraction_tokens = sum(tokens for _, tokens in extraction_results)
 
     vote_counts = Counter(labels)
     winner, winner_count = vote_counts.most_common(1)[0]
