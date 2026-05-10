@@ -1,0 +1,49 @@
+project_name: Broadside-AI
+pipeline: workflow/pipeline-full-with-deep-audit.yaml
+current_phase: architecture
+last_updated: "2026-05-07T20:58:34.943Z"
+phases:
+  architecture:
+    status: pending
+    owner_notes: []
+    outputs_present: []
+    open_questions: []
+    carry_forward: []
+  defect-scan-mechanical:
+    status: pending
+    owner_notes: []
+    outputs_present: []
+    open_questions: []
+    carry_forward: []
+  contracts:
+    status: pending
+    owner_notes: []
+    outputs_present: []
+    open_questions: []
+    carry_forward: []
+  protocols:
+    status: pending
+    owner_notes: []
+    outputs_present: []
+    open_questions: []
+    carry_forward: []
+  defect-scan-semantic:
+    status: pending
+    owner_notes: []
+    outputs_present: []
+    open_questions: []
+    carry_forward: []
+  porting:
+    status: pending
+    owner_notes: []
+    outputs_present: []
+    open_questions: []
+    carry_forward: []
+  reimplementation-spec:
+    status: pending
+    owner_notes: []
+    outputs_present: []
+    open_questions: []
+    carry_forward: []
+next_actions:
+  - "Begin architecture phase by producing findings/architecture/architecture-map.md"
